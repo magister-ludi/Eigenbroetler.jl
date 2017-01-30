@@ -1,5 +1,28 @@
+# TODO: remove comment
+isdefined(Base, :__precompile__) && __precompile__()
+
 module Eigenbroetler
 
-# package code goes here
+using FITSIO
+using FileIO
+using Images
+using FITSIO.Libcfitsio
 
-end # module
+import Base: show,
+             fft,
+             fill!,
+             getindex,
+             setindex!
+import FileIO.save
+
+export Eigenbrot
+export width, height
+export isValid, isFFT
+export save, show, fft
+export fill!, getindex, setindex!
+export index, coords
+
+include("eigenbrot.jl")
+include("fft.jl")
+
+end
