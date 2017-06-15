@@ -1,4 +1,4 @@
-# TODO: remove comment
+
 isdefined(Base, :__precompile__) && __precompile__()
 
 module Eigenbroetler
@@ -18,11 +18,17 @@ import FileIO.save
 export Eigenbrot
 export width, height
 export isValid, isFFT
-export save, show, fft
+export save, show
 export fill!, getindex, setindex!
 export index, coords
+export fft, fftx, ffty, removeDC
+export ImageSetting
+export Linear, Log, Root
+export RealPart, ImagPart, Magn, Phase
 
+include("colourmaps.jl")
 include("eigenbrot.jl")
+include("simple.jl")
 include("fft.jl")
 
 end
