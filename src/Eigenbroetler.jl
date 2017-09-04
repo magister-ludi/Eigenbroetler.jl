@@ -12,7 +12,8 @@ import Base: show,
              fft,
              fill!,
              getindex,
-             setindex!
+             setindex!,
+             similar
 import FileIO.save
 
 export Eigenbrot
@@ -25,6 +26,7 @@ export fft, fftx, ffty, removeDC
 export ImageSetting
 export Linear, Log, Root
 export RealPart, ImagPart, Magn, Phase
+export image
 
 include("colourmaps.jl")
 include("eigenbrot.jl")

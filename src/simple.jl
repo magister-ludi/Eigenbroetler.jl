@@ -8,23 +8,21 @@ end
 
 phase(eb::Eigenbrot) = angle(eb)
 
-import Base: (+), (.+), (-), (.-), (*), (.*), (/), (./), (.^)
+import Base: (+), (-), (*), (/), (^)
 
 (+)(eb1::Eigenbrot, eb2::Eigenbrot) = Eigenbrot(eb1.vals .+ eb2.vals)
-(+)(eb1::Eigenbrot, n::Number) = Eigenbrot(eb1.vals .+ n)
-(+)(n::Number, eb1::Eigenbrot) = eb1 .+ n
-(.+)(eb1::Eigenbrot, eb2) = eb1 + eb2
-(.+)(eb1, eb2::Eigenbrot) = eb1 + eb2
+(+)(eb1::Eigenbrot, n::Number) = Eigenbrot(eb1.vals + n)
+(+)(n::Number, eb1::Eigenbrot) = eb1 + n
 (-)(eb1::Eigenbrot, eb2::Eigenbrot) = Eigenbrot(eb1.vals .- eb2.vals)
 (-)(eb1::Eigenbrot, n::Number) = Eigenbrot(eb1.vals .- n)
-(-)(n::Number, eb1::Eigenbrot) = eb1 .- n
-(.-)(eb1::Eigenbrot, eb2) = eb1 - eb2
-(.-)(eb1::Eigenbrot, eb2::Eigenbrot) = eb1 - eb2
+(-)(n::Number, eb1::Eigenbrot) = Eigenbrot(n .- eb1.vals)
 
-(.*)(eb1::Eigenbrot, eb2::Eigenbrot) = Eigenbrot(eb1.vals .* eb2.vals)
-(*)(eb::Eigenbrot, x::Number) = x * eb
+(*)(eb::Eigenbrot, x::Number) = Eigenbrot(x * eb)
 (*)(x::Number, eb::Eigenbrot) = Eigenbrot(x .* eb.vals)
 (/)(eb::Eigenbrot, x::Number) = Eigenbrot(eb.vals ./ x)
-(./)(x::Number, eb::Eigenbrot) = Eigenbrot(x ./ eb.vals)
-(.^)(eb::Eigenbrot, x::Number) = Eigenbrot(eb.vals .^ x)
-(.^)(x::Number, eb::Eigenbrot) = Eigenbrot(x .^ eb.vals)
+
+Base.broadcast(::typeof(*), eb1::Eigenbrot, eb2::Eigenbrot) =
+    Eigenbrot(eb1.vals .* eb2.vals)
+
+Base.broadcast(::typeof(/), eb1::Eigenbrot, eb2::Eigenbrot) =
+    Eigenbrot(eb1.vals ./ eb2.vals)
