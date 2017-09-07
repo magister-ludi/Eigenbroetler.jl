@@ -26,7 +26,7 @@ export fft, fftx, ffty, removeDC
 export ImageSetting
 export Linear, Log, Root
 export RealPart, ImagPart, Magn, Phase
-export image
+export image, trim, pow2pad, pow2pad!
 
 include("colourmaps.jl")
 include("eigenbrot.jl")

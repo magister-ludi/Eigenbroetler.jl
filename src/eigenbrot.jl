@@ -23,7 +23,7 @@ mutable struct Eigenbrot
     maxCmp::Float64
     minCmp::Float64
     maxMag::Float64
-    Eigenbrot(data::Matrix{Complex128}) = new(data, "", false, false)
+    Eigenbrot(data::Matrix{Complex128}, fft = false) = new(data, "", fft, false)
     Eigenbrot(rows::Integer, cols::Integer) =
         new(Matrix{Complex128}(rows, cols), "", false, false)
 end
