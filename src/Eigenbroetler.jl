@@ -13,6 +13,7 @@ import Base: show,
              fill!,
              getindex,
              setindex!,
+             copy,
              similar
 import FileIO.save
 

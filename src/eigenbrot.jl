@@ -24,8 +24,8 @@ mutable struct Eigenbrot
     minCmp::Float64
     maxMag::Float64
     Eigenbrot(data::Matrix{Complex128}, fft = false) = new(data, "", fft, false)
-    Eigenbrot(rows::Integer, cols::Integer) =
-        new(Matrix{Complex128}(rows, cols), "", false, false)
+    Eigenbrot(rows::Integer, cols::Integer, fft = false) =
+        new(Matrix{Complex128}(rows, cols), "", fft, false)
 end
 
 @enum Scale Linear Log Root
@@ -272,7 +272,7 @@ function calculate_pixels!(img::Matrix{RGB{N0f8}}, eb::Eigenbrot,
 end
 
 function show(io::IO, eb::Eigenbrot)
-    print(io, "Eigenbrot(", width(eb), "x", height(eb), ", ",
+    print(io, "Eigenbrot(", height(eb), "x", width(eb), ", ",
           isFFT(eb) ? "Fourier" : "Real", " space)")
  end
 
@@ -298,3 +298,5 @@ function calculate_ranges!(eb::Eigenbrot)
 end
 
 similar(eb::Eigenbrot) = Eigenbrot(height(eb), width(eb))
+
+copy(eb::Eigenbrot) = Eigenbrot(copy(eb.vals), eb.fft)
