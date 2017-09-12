@@ -62,10 +62,11 @@ function read_fits(file::AbstractString)
     data = read(hdu)
 
     if ndims(data) > 2
-        cdata = Matrix{Complex128}(size(data, 1), size(data, 2))
-        for r in 1:size(data, 1)
-            for c in size(data, 2)
-                cdata[r, c] = Complex128(data[r, c, 1], data[r, c, 2])
+        w, h = size(data)
+        cdata = Matrix{Complex128}(h, w)
+        for c in 1:w
+            for r in 1:h
+                cdata[h - r + 1, c] = Complex128(data[c, r, 1], data[c, r, 2])
             end
         end
     elseif ndims(data) == 2
