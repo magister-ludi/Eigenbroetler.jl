@@ -28,6 +28,7 @@ export ImageSetting
 export Linear, Log, Root
 export RealPart, ImagPart, Magn, Phase
 export image, trim, pow2pad, pow2pad!
+export flipver, fliphor, swapxy
 
 include("colourmaps.jl")
 include("eigenbrot.jl")

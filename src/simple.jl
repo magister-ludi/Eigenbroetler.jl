@@ -116,3 +116,36 @@ function pow2pad!(eb::Eigenbrot)
     eb.vals = eb2.vals
     return eb
 end
+
+function flipver(eb::Eigenbrot)
+    flip = copy(eb)
+    h = size(flip, 1)
+    for r in 1:h
+        reverse!(@view flip.vals[r, :])
+    end
+    return flip
+end
+
+function fliphor(eb::Eigenbrot)
+    flip = copy(eb)
+    w = size(flip, 2)
+    for c in 1:w
+        reverse!(@view flip.vals[:, c])
+    end
+    return flip
+end
+
+function swapxy(eb::Eigenbrot, xflip = false)
+    h, w = size(eb)
+    swap = Eigenbrot(w, h)
+    if xflip
+        for c in 1:h
+            swap.vals[:, c] = @view eb.vals[c, :]
+        end
+    else
+        for c in 1:h
+            swap.vals[w:-1:1, h-c+1] = @view eb.vals[c, :]
+        end
+    end
+    return swap
+end
