@@ -12,5 +12,5 @@ function fibonacci(x::Number, y::Number)
     return cos(30.0 * log(r) + 13.0 * phi) ^ 2 + cos(20.0 * log(r) - 11.0 * phi) ^ 2
 end
 
-eb = Eigenbrot(512, 512, fibonacci)
+eb = Eigenbrot(fibonacci, 512, 512)
 save("fibonacci.png", eb, ImageSetting(RealPart, Linear))

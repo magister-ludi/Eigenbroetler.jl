@@ -8,6 +8,6 @@ function high_freq_sinusoid(x::Number, y::Number)
     return sin(100 * r)
 end
 
-eb = Eigenbrot(512, 512, high_freq_sinusoid)
+eb = Eigenbrot(high_freq_sinusoid, 512, 512)
 save("high_freq_sinusoid.png", eb, ImageSetting(RealPart, Linear))
 save("high_freq_sinusoid_dft.png", fft(eb), ImageSetting(Magn, Log))

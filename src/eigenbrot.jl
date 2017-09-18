@@ -39,12 +39,12 @@ struct ImageSetting
         new(component, scale, power)
 end
 
-function Eigenbrot(rows::Integer, cols::Integer, f::Function)
+function Eigenbrot(f::Function, rows::Integer, cols::Integer)
     xMax = div(cols, 2) - 1
     xMin = xMax - cols + 1
     yMax = div(rows, 2) - 1
     yMin = yMax - rows + 1
-    return Eigenbrot([Complex128(f(x, y)) for x in xMax:-1:xMin, y in yMin:yMax])
+    return Eigenbrot([Complex128(f(x, y)) for y in yMax:-1:yMin, x in xMin:xMax])
 end
 
 function read_fits(file::AbstractString)
@@ -128,11 +128,11 @@ getindex(eb::Eigenbrot, i::Integer) =
 getindex{T<:Real, U<:Real}(eb::Eigenbrot, rc::Tuple{T, U}) =
     getindex(eb.vals, rc[1], rc[2])
 setindex!(eb::Eigenbrot, v::Number, r::Integer, c::Integer) =
-    setindex!(eb.vals, r, c)
+    setindex!(eb.vals, v, r, c)
 setindex!(eb::Eigenbrot, v::Number, i::Integer) =
-    setindex!(eb.vals, i)
-setindex!{T<:Real, U<:Real}(eb::Eigenbrot, rc::Tuple{T, U}) =
-    setindex!(eb.vals, rc[1], rc[2])
+    setindex!(eb.vals, v, i)
+setindex!{T<:Real, U<:Real}(eb::Eigenbrot, v::Number, rc::Tuple{T, U}) =
+    setindex!(eb.vals, v, rc[1], rc[2])
 reset!(eb::Eigenbrot) = (eb.have_min_max = false)
 
 """
