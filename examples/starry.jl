@@ -4,8 +4,8 @@ using Eigenbroetler
 
 function starry(x::Number, y::Number)
     r = sqrt(x * x + y * y)
-    phi = atan2(y, x)
-    return sin(r * (3 + cos(7 * phi)) / 4)
+    ϕ = atan2(y, x)
+    return sin(r * (3 + cos(7 * ϕ)) / 4)
 end
 
 eb = Eigenbrot(starry, 512, 512)
