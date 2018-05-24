@@ -5,13 +5,13 @@ Construct an Eigenbrot from a file, which should be a FITS
 file (including a gzipped FITS file), or an image type that
 can be loaded by ImageMagick.
 
-    Eigenbrot(data::Matrix{Complex128})
+    Eigenbrot(data::Matrix{Complex128}, fft = false)
 Construct an Eigenbrot from a matrix of complex values.
 
-    Eigenbrot(rows::Integer, cols::Integer)
+    Eigenbrot(rows::Integer, cols::Integer, fft = false)
 Construct an unitialised Eigenbrot of size `rows×cols`.
 
-    Eigenbrot(rows::Integer, cols::Integer, f::Function)
+    Eigenbrot(f::Function, rows::Integer, cols::Integer, fft = false)
 Construct an Eigenbrot of size `rows×cols`, using `f(x, y)` to
 calculate the data values.
 """
@@ -39,12 +39,12 @@ struct ImageSetting
         new(component, scale, power)
 end
 
-function Eigenbrot(f::Function, rows::Integer, cols::Integer)
+function Eigenbrot(f::Function, rows::Integer, cols::Integer, fft = false)
     xMax = div(cols, 2) - 1
     xMin = xMax - cols + 1
     yMax = div(rows, 2) - 1
     yMin = yMax - rows + 1
-    return Eigenbrot([Complex128(f(x, y)) for y in yMax:-1:yMin, x in xMin:xMax])
+    return Eigenbrot([Complex128(f(x, y)) for y in yMax:-1:yMin, x in xMin:xMax], fft)
 end
 
 function read_fits(file::AbstractString)
@@ -142,15 +142,15 @@ Fill Eigenbrot `eb` with the number `x`.
 fill!(eb::Eigenbrot, x::Number) = fill!(eb.vals, x)
 
 """
-    save(filename, eb)
+    save(filename::AbstractString, eb::Eigenbrot)
 Write Eigenbrot `eb` to a file in FITS format
 
-    save(filename, eb, cmp::ImageSetting; colours::Symbol)
+    save(filename::AbstractString, eb::Eigenbrot, cmp::ImageSetting; colours::Symbol)
 Save a bitmap representation of a component of Eigenbrot `eb` to
 `filename`. The file format will be determined by the file name.
 The component of the data and the scaling method are determined by `cmp`.
 
-    save(filename, eb, cmp::ImageSettingb, cmp2::ImageSetting; colours::Symbol)
+    save(filename, eb::Eigenbrot, cmp::ImageSetting, cmp2::ImageSetting; colours::Symbol)
 Save a bitmap representation of two components of Eigenbrot `eb` to
 `filename`. The file format will be determined by the file name.
 The components of the data and the scaling method are determined by `cmp`
@@ -184,11 +184,11 @@ function save(filename::AbstractString, eb::Eigenbrot)
 end
 
 """
-    image(filename, eb, cmp::ImageSetting; colours::Symbol)
+    image(eb::Eigenbrot, cmp::ImageSetting; colours::Symbol)
 Construct a bitmap representation of a component of Eigenbrot `eb`.
 The component of the data and the scaling method are determined by `cmp`.
 
-    image(filename, eb, cmp::ImageSettingb, cmp2::ImageSetting; colours::Symbol)
+    image(eb::Eigenbrot, cmp::ImageSettingb, cmp2::ImageSetting; colours::Symbol)
 Construct a bitmap representation of two components of Eigenbrot `eb`.
 The components of the data and the scaling method are determined by `cmp`
 and `cmp2`.
