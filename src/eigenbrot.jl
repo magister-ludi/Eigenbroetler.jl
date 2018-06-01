@@ -44,7 +44,7 @@ function Eigenbrot(f::Function, rows::Integer, cols::Integer, fft = false)
     xMin = xMax - cols + 1
     yMax = div(rows, 2) - 1
     yMin = yMax - rows + 1
-    return Eigenbrot([Complex128(f(x, y)) for y in yMax:-1:yMin, x in xMin:xMax], fft)
+    return Eigenbrot([Complex128(f(x, y)) for y in yMin:yMax, x in xMin:xMax], fft)
 end
 
 function read_fits(file::AbstractString)
@@ -66,7 +66,7 @@ function read_fits(file::AbstractString)
         cdata = Matrix{Complex128}(h, w)
         for c in 1:w
             for r in 1:h
-                cdata[h - r + 1, c] = Complex128(data[c, r, 1], data[c, r, 2])
+                cdata[r, c] = Complex128(data[c, r, 1], data[c, r, 2])
             end
         end
     elseif ndims(data) == 2
@@ -92,11 +92,14 @@ function read_image(file::AbstractString)
     https://en.wikipedia.org/wiki/Grayscale
     =#
     img = Gray.(img)
-    cdata = Vector{Complex128}(length(img))
-    for i in 1:length(img)
-        cdata[i] = Complex128(round(UInt8, 255 * img[i].val))
+    w, h = size(img)
+    cdata = Matrix{Complex128}(h, w)
+    for c in 1:w
+        for r in 1:h
+            cdata[h - r + 1, c] = Complex128(round(UInt8, 255 * img[r, c].val))
+        end
     end
-    return reshape(cdata, size(img))
+    return cdata
 end
 
 const fits_magic = b"SIMPLE "
@@ -125,21 +128,33 @@ getindex(eb::Eigenbrot, r::Integer, c::Integer) =
     getindex(eb.vals, r, c)
 getindex(eb::Eigenbrot, i::Integer) =
     getindex(eb.vals, i)
-getindex{T<:Real, U<:Real}(eb::Eigenbrot, rc::Tuple{T, U}) =
+getindex{T <: Real, U <: Real}(eb::Eigenbrot, rc::Tuple{T, U}) =
     getindex(eb.vals, rc[1], rc[2])
-setindex!(eb::Eigenbrot, v::Number, r::Integer, c::Integer) =
-    setindex!(eb.vals, v, r, c)
-setindex!(eb::Eigenbrot, v::Number, i::Integer) =
-    setindex!(eb.vals, v, i)
-setindex!{T<:Real, U<:Real}(eb::Eigenbrot, v::Number, rc::Tuple{T, U}) =
-    setindex!(eb.vals, v, rc[1], rc[2])
 reset!(eb::Eigenbrot) = (eb.have_min_max = false)
+
+function setindex!(eb::Eigenbrot, v::Number, r::Integer, c::Integer)
+    reset!(eb)
+    setindex!(eb.vals, v, r, c)
+end
+
+function setindex!(eb::Eigenbrot, v::Number, i::Integer)
+    reset!(eb)
+    setindex!(eb.vals, v, i)
+end
+
+function setindex!{T <: Real, U <: Real}(eb::Eigenbrot, v::Number, rc::Tuple{T, U})
+    reset!(eb)
+    setindex!(eb.vals, v, rc[1], rc[2])
+end
 
 """
     fill!(eb, x)
 Fill Eigenbrot `eb` with the number `x`.
 """
-fill!(eb::Eigenbrot, x::Number) = fill!(eb.vals, x)
+function fill!(eb::Eigenbrot, x::Number)
+    reset!(eb)
+    fill!(eb.vals, x)
+end
 
 """
     save(filename::AbstractString, eb::Eigenbrot)
@@ -169,7 +184,7 @@ function save(filename::AbstractString, eb::Eigenbrot)
     lpData = Vector{Float64}(hlen * 2)
     real = 1
     imag = 1 + hlen
-    for r in h:-1:1
+    for r in 1:h
         for c in 1:w
             v = eb.vals[r, c]
             lpData[real] = v.re
@@ -221,15 +236,18 @@ scaleRoot(x::Float64, p::Int) = x ^ (1.0 / p)
 
 function calculate_pixels!(img::Matrix{RGB{N0f8}}, eb::Eigenbrot,
                            cmp::ImageSetting, palette::Palette, idx::Integer)
+    h, w = size(eb.vals)
     if cmp.c == Phase
         # Phase part
         minValue = -π
         maxValue = +π
         scaleFactor = (NUM_COLOURS - 1) / (maxValue - minValue)
-        for cval in eb.vals
-            idx += 1
-            k = trunc(Int, scaleFactor * (angle(cval) - minValue))
-            img[idx] = palette[1 + k]
+        for c in 1:w
+            for r in h:-1:1
+                k = trunc(Int, scaleFactor * (angle(eb.vals[r, c]) - minValue))
+                idx += 1
+                img[idx] = palette[1 + k]
+            end
         end
     elseif cmp.c == Magn
         # Magnitude part
@@ -246,10 +264,12 @@ function calculate_pixels!(img::Matrix{RGB{N0f8}}, eb::Eigenbrot,
             scaleFactor = (NUM_COLOURS - 1) /
                 (scaler(maxValue - offset, cmp.p) - scaler(minValue - offset, cmp.p))
         end
-        for cval in eb.vals
-            idx += 1
-            k = trunc(Int, scaler(abs(cval) - offset, cmp.p) * scaleFactor)
-            img[idx] = palette[1 + k]
+        for c in 1:w
+            for r in h:-1:1
+                k = trunc(Int, scaler(abs(eb.vals[r, c]) - offset, cmp.p) * scaleFactor)
+                idx += 1
+                img[idx] = palette[1 + k]
+            end
         end
     else
         scaler = scaleLinear
@@ -264,10 +284,12 @@ function calculate_pixels!(img::Matrix{RGB{N0f8}}, eb::Eigenbrot,
                 (scaler(maxValue - offset, cmp.p) - scaler(minValue - offset, cmp.p))
         end
         select = (cmp.c == RealPart) ? real : imag
-        for cval in eb.vals
-            idx += 1
-            k = trunc(Int, scaler(select(cval) - offset, cmp.p) * scaleFactor)
-            img[idx] = palette[1 + k]
+        for c in 1:w
+            for r in h:-1:1
+                k = trunc(Int, scaler(select(eb.vals[r, c]) - offset, cmp.p) * scaleFactor)
+                idx += 1
+                img[idx] = palette[1 + k]
+            end
         end
     end
 end
@@ -301,3 +323,43 @@ end
 similar(eb::Eigenbrot) = Eigenbrot(height(eb), width(eb))
 
 copy(eb::Eigenbrot) = Eigenbrot(copy(eb.vals), eb.fft)
+
+"""
+    pixel(eb::Eigenbrot, x::Real, y::Real)
+Return a tuple , `(row, column)`, indexing the closest position
+in `eb` to to the Cartesian location `(x, y)`. The inverse of `coords`.
+    pixel(eb::Eigenbrot, xy::Tuple{Real, Real})
+Return a tuple , `(row, column)`, indexing the closest position
+in `eb` to to the Cartesian location given by `xy`. The inverse of `coords`.
+"""
+function pixel(eb::Eigenbrot, x::Real, y::Real)
+    h, w = size(eb.vals)
+    xMax = div(w, 2)
+    xMin = xMax - w
+    yMax = div(h, 2)
+    yMin = yMax - h
+    (round(Int, 1 + h * (y - yMin) / (yMax - yMin)),
+     round(Int, 1 + w * (x - xMin) / (xMax - xMin)))
+end
+
+pixel{T <: Real, U <: Real}(eb::Eigenbrot, xy::Tuple{T, U}) =
+    pixel(eb, xy[1], xy[2])
+
+"""
+    coords(eb::Eigenbrot, r::Integer, c::Integer)
+Return a tuple, `(x, y)`, of the Cartesian location
+mapped by the pixel `eb[r, c]`. The inverse of `pixel`.
+    coords(eb::Eigenbrot, rc::Tuple{Integer, Integer})
+Return a tuple , `(x, y)`, of the Cartesian location
+mapped by the pixel `eb[rc]`. The inverse of `pixel`.
+"""
+function coords(eb::Eigenbrot, r::Integer, c::Integer)
+    h, w = size(eb.vals)
+    xMin = div(w, 2) - w
+    yMin = div(h, 2) - h
+    (xMin + (c - 1) * (xMax - xMin) / w,
+     yMin + (r - 1) * (yMax - yMin) / h)
+end
+
+coords{T <: Integer, U <: Integer}(eb::Eigenbrot, rc::Tuple{T, U}) =
+    coords(eb, rc[1], rc[2])
