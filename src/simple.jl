@@ -31,7 +31,7 @@ Base.broadcast(::typeof(/), eb1::Eigenbrot, eb2::Eigenbrot) =
 Utility method used by trim() methods, not exported.
 =#
 function _trim(v::Matrix{Complex128}, value::Complex,
-                  left::Integer, top::Integer, right::Integer, bottom::Integer)
+               left::Integer, top::Integer, right::Integer, bottom::Integer)
     rows, cols = size(v)
     cols_out = cols - left - right
     rows_out = rows - top - bottom
@@ -43,9 +43,9 @@ function _trim(v::Matrix{Complex128}, value::Complex,
     col_src2 = right < 0 ? cols : cols - right
     col_dest2 = col_dest1 + col_src2 - col_src1
 
-    row_dest1 = top < 0 ? 1 - top : 1
-    row_src1 = top < 0 ? 1 : 1 + top
-    row_src2 = bottom < 0 ? rows : rows - bottom
+    row_dest1 = bottom < 0 ? 1 - bottom : 1
+    row_src1 = bottom < 0 ? 1 : 1 + bottom
+    row_src2 = top < 0 ? rows : rows - top
     row_dest2 = row_dest1 + row_src2 - row_src1
 
     v2 = fill(complex(value), rows_out, cols_out)
@@ -62,12 +62,12 @@ extend by that amount, filling the new pixels with zero.
 Trim edges of `eb` by `margin` pixels. If `margin` is negative,
 extend by that amount, filling the new pixels with `value`.
 
-    trim(eb::Eigenbrot; value = 0, left::Integer = 0, top::Integer = 0, right::Integer = 0, bottom::Integer = 0)
+    trim(eb::Eigenbrot, value = 0; left::Integer = 0, top::Integer = 0, right::Integer = 0, bottom::Integer = 0)
 Trim the named edges of `eb` by the number of pixels given. Negative
 edge values will extend by the relevant amount, filling the new pixels
 with `value`.
 """
-trim(eb::Eigenbrot; value::Number = 0.0im, left::Integer = 0, top::Integer = 0,
+trim(eb::Eigenbrot, value::Number = 0.0im; left::Integer = 0, top::Integer = 0,
         right::Integer = 0, bottom::Integer = 0) =
     Eigenbrot(_trim(eb.vals, Complex128(value), left, top, right, bottom), eb.fft)
 
