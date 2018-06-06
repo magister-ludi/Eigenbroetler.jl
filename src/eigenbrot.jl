@@ -17,7 +17,6 @@ calculate the data values.
 """
 mutable struct Eigenbrot
     vals::Matrix{Complex128}
-    errorString::AbstractString
     fft::Bool
     have_min_max::Bool
     maxCmp::Float64
@@ -121,37 +120,58 @@ end
 Images.width(eb::Eigenbrot) = size(eb.vals, 2)
 Images.height(eb::Eigenbrot) = size(eb.vals, 1)
 Base.size(eb::Eigenbrot) = size(eb.vals)
-isValid(eb::Eigenbrot) = isempty(eb.errorString)
 isFFT(eb::Eigenbrot) = eb.fft
 
-getindex(eb::Eigenbrot, r::Integer, c::Integer) =
+Base.getindex(eb::Eigenbrot, r::Integer, c::Integer) =
     getindex(eb.vals, r, c)
-getindex(eb::Eigenbrot, i::Integer) =
+Base.getindex(eb::Eigenbrot, i::Integer) =
     getindex(eb.vals, i)
-getindex{T <: Real, U <: Real}(eb::Eigenbrot, rc::Tuple{T, U}) =
+Base.getindex{T <: Real, U <: Real}(eb::Eigenbrot, rc::Tuple{T, U}) =
     getindex(eb.vals, rc[1], rc[2])
+Base.getindex(eb::Eigenbrot, r::Integer, cs::Colon) =
+    getindex(eb.vals, r, cs)
+Base.getindex(eb::Eigenbrot, rs::Colon, c::Integer) =
+    getindex(eb.vals, rs, c)
+Base.getindex(eb::Eigenbrot, rs::Colon, cs::Colon) =
+    getindex!(eb.vals, rs, cs)
+
 reset!(eb::Eigenbrot) = (eb.have_min_max = false)
 
-function setindex!(eb::Eigenbrot, v::Number, r::Integer, c::Integer)
+function Base.setindex!(eb::Eigenbrot, v::Number, r::Integer, c::Integer)
     reset!(eb)
     setindex!(eb.vals, v, r, c)
 end
 
-function setindex!(eb::Eigenbrot, v::Number, i::Integer)
+function Base.setindex!(eb::Eigenbrot, v::Number, i::Integer)
     reset!(eb)
     setindex!(eb.vals, v, i)
 end
 
-function setindex!{T <: Real, U <: Real}(eb::Eigenbrot, v::Number, rc::Tuple{T, U})
+function Base.setindex!{T <: Real, U <: Real}(eb::Eigenbrot, v::Number, rc::Tuple{T, U})
     reset!(eb)
     setindex!(eb.vals, v, rc[1], rc[2])
+end
+
+function Base.setindex!{T <: Real}(eb::Eigenbrot, m::Matrix{T}, rs::Colon, cs::Colon)
+    reset!(eb)
+    setindex!(eb.vals, m, rs, cs)
+end
+
+function Base.setindex!{T <: Real}(eb::Eigenbrot, v::Vector{T}, r::Integer, cs::Colon)
+    reset!(eb)
+    setindex!(eb.vals, v, r, cs)
+end
+
+function Base.setindex!{T <: Real}(eb::Eigenbrot, v::Vector{T}, rs::Colon, c::Integer)
+    reset!(eb)
+    setindex!(eb.vals, v, rs, c)
 end
 
 """
     fill!(eb, x)
 Fill Eigenbrot `eb` with the number `x`.
 """
-function fill!(eb::Eigenbrot, x::Number)
+function Base.fill!(eb::Eigenbrot, x::Number)
     reset!(eb)
     fill!(eb.vals, x)
 end
@@ -171,7 +191,7 @@ Save a bitmap representation of two components of Eigenbrot `eb` to
 The components of the data and the scaling method are determined by `cmp`
 and `cmp2`.
 """
-function save(filename::AbstractString, eb::Eigenbrot)
+function FileIO.save(filename::AbstractString, eb::Eigenbrot)
     keys = ["COMMENT", "ISFFT"]
     values = [nothing, eb.fft]
     comments = ["CREATED BY AN EIGENBROETLER",
@@ -224,7 +244,7 @@ function image(eb::Eigenbrot,
     return img
 end
 
-save(filename::AbstractString, eb::Eigenbrot,
+FileIO.save(filename::AbstractString, eb::Eigenbrot,
      cmp::ImageSetting,
      cmp2::Union{Void, ImageSetting} = nothing;
      colours::Union{Symbol, AbstractString} = :grey) =
@@ -294,7 +314,7 @@ function calculate_pixels!(img::Matrix{RGB{N0f8}}, eb::Eigenbrot,
     end
 end
 
-function show(io::IO, eb::Eigenbrot)
+function Base.show(io::IO, eb::Eigenbrot)
     print(io, "Eigenbrot(", height(eb), "x", width(eb), ", ",
           isFFT(eb) ? "Fourier" : "Real", " space)")
  end
@@ -320,9 +340,9 @@ function calculate_ranges!(eb::Eigenbrot)
     return
 end
 
-similar(eb::Eigenbrot) = Eigenbrot(height(eb), width(eb))
+Base.similar(eb::Eigenbrot) = Eigenbrot(height(eb), width(eb))
 
-copy(eb::Eigenbrot) = Eigenbrot(copy(eb.vals), eb.fft)
+Base.copy(eb::Eigenbrot) = Eigenbrot(copy(eb.vals), eb.fft)
 
 """
     pixel(eb::Eigenbrot, x::Real, y::Real)

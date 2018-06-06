@@ -2,13 +2,13 @@
 const MAX_COLOUR = 255
 const NUM_COLOURS = MAX_COLOUR + 1
 
-immutable Palette
+struct Palette
     p::Vector{RGB{N0f8}}
 end
 
 const palettes = Dict{Symbol, Palette}()
 
-getindex(pal::Palette, idx::Integer) = pal.p[idx]
+Base.getindex(pal::Palette, idx::Integer) = pal.p[idx]
 
 """
     readpalette(stream::IO)

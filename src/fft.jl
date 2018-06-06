@@ -55,7 +55,7 @@ Returns the two-dimensional DFT of Eigenbrot `eb`. If
 at the coordinate origin is at the central location of
 the data.
 """
-function fft(eb::Eigenbrot, recentre::Bool = true)
+function Base.fft(eb::Eigenbrot, recentre::Bool = true)
     w = width(eb)
     h = height(eb)
     scale = 1.0 / sqrt(h * w)

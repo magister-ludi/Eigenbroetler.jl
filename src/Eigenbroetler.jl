@@ -8,17 +8,8 @@ using FileIO
 using Images
 using FITSIO.Libcfitsio
 
-import Base: show,
-             fft,
-             fill!,
-             getindex,
-             setindex!,
-             copy,
-             similar
-import FileIO.save
-
 export Eigenbrot
-export width, height
+export width, height, size
 export isValid, isFFT
 export save, show
 export fill!, getindex, setindex!
