@@ -22,9 +22,9 @@ mutable struct Eigenbrot
     maxCmp::Float64
     minCmp::Float64
     maxMag::Float64
-    Eigenbrot(data::Matrix{Complex128}, fft = false) = new(data, "", fft, false)
+    Eigenbrot(data::Matrix{Complex128}, fft = false) = new(data, fft, false)
     Eigenbrot(rows::Integer, cols::Integer, fft = false) =
-        new(Matrix{Complex128}(rows, cols), "", fft, false)
+        new(Matrix{Complex128}(rows, cols), fft, false)
 end
 
 @enum Scale Linear Log Root
