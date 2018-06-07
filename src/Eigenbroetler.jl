@@ -18,7 +18,7 @@ export fft, fftx, ffty, removeDC
 export ImageSetting
 export Linear, Log, Root
 export RealPart, ImagPart, Magn, Phase
-export image, trim, pow2pad, pow2pad!
+export image, pad, pow2pad, pow2pad!
 export flipver, fliphor, swapxy
 export pixel, coords
 export chirpZScale, chirpZScaleX, chirpZScaleY
