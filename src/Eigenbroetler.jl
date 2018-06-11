@@ -23,7 +23,7 @@ export flipver, fliphor, swapxy
 export pixel, coords
 export chirpZScale, chirpZScaleX, chirpZScaleY
 export hilbertX, hilbertY
-export fft_xshear, fft_yshear
+export fft_xshear, fft_yshear, rotate90, fourierRotation
 
 include("colourmaps.jl")
 include("eigenbrot.jl")
