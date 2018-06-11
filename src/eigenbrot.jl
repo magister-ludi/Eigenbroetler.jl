@@ -22,10 +22,11 @@ mutable struct Eigenbrot
     maxCmp::Float64
     minCmp::Float64
     maxMag::Float64
-    Eigenbrot(data::Matrix{Complex128}, fft = false) = new(data, fft, false)
-    Eigenbrot(rows::Integer, cols::Integer, fft = false) =
-        new(Matrix{Complex128}(rows, cols), fft, false)
+    Eigenbrot{T <: Number}(data::Matrix{T}, fft = false) = new(Complex128.(data), fft, false)
 end
+
+Eigenbrot(rows::Integer, cols::Integer, fft = false) =
+        Eigenbrot(Matrix{Complex128}(rows, cols), fft)
 
 @enum Scale Linear Log Root
 @enum Component RealPart ImagPart Magn Phase
@@ -119,53 +120,24 @@ end
 
 Images.width(eb::Eigenbrot) = size(eb.vals, 2)
 Images.height(eb::Eigenbrot) = size(eb.vals, 1)
-Base.size(eb::Eigenbrot) = size(eb.vals)
 isFFT(eb::Eigenbrot) = eb.fft
 
-Base.getindex(eb::Eigenbrot, r::Integer, c::Integer) =
-    getindex(eb.vals, r, c)
-Base.getindex(eb::Eigenbrot, i::Integer) =
-    getindex(eb.vals, i)
-Base.getindex{T <: Real, U <: Real}(eb::Eigenbrot, rc::Tuple{T, U}) =
-    getindex(eb.vals, rc[1], rc[2])
-Base.getindex(eb::Eigenbrot, r::Integer, cs::Colon) =
-    getindex(eb.vals, r, cs)
-Base.getindex(eb::Eigenbrot, rs::Colon, c::Integer) =
-    getindex(eb.vals, rs, c)
-Base.getindex(eb::Eigenbrot, rs::Colon, cs::Colon) =
-    getindex!(eb.vals, rs, cs)
+for name in (:ndims, :length, :size)
+    @eval begin
+        import Base.$name
+        $name(eb::Eigenbrot) = $name(eb.vals)
+    end
+end
+
+Base.size(eb::Eigenbrot, args...) = size(eb.vals, args...)
+Base.getindex(eb::Eigenbrot, args...) = getindex(eb.vals, args...)
+
+function Base.setindex!(eb::Eigenbrot, val::Number, args...)
+    reset!(eb)
+    setindex!(eb.vals, val, args...)
+end
 
 reset!(eb::Eigenbrot) = (eb.have_min_max = false)
-
-function Base.setindex!(eb::Eigenbrot, v::Number, r::Integer, c::Integer)
-    reset!(eb)
-    setindex!(eb.vals, v, r, c)
-end
-
-function Base.setindex!(eb::Eigenbrot, v::Number, i::Integer)
-    reset!(eb)
-    setindex!(eb.vals, v, i)
-end
-
-function Base.setindex!{T <: Real, U <: Real}(eb::Eigenbrot, v::Number, rc::Tuple{T, U})
-    reset!(eb)
-    setindex!(eb.vals, v, rc[1], rc[2])
-end
-
-function Base.setindex!{T <: Real}(eb::Eigenbrot, m::Matrix{T}, rs::Colon, cs::Colon)
-    reset!(eb)
-    setindex!(eb.vals, m, rs, cs)
-end
-
-function Base.setindex!{T <: Real}(eb::Eigenbrot, v::Vector{T}, r::Integer, cs::Colon)
-    reset!(eb)
-    setindex!(eb.vals, v, r, cs)
-end
-
-function Base.setindex!{T <: Real}(eb::Eigenbrot, v::Vector{T}, rs::Colon, c::Integer)
-    reset!(eb)
-    setindex!(eb.vals, v, rs, c)
-end
 
 """
     fill!(eb, x)
