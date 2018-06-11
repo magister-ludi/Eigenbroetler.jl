@@ -22,11 +22,14 @@ export image, pad, pow2pad, pow2pad!
 export flipver, fliphor, swapxy
 export pixel, coords
 export chirpZScale, chirpZScaleX, chirpZScaleY
+export hilbertX, hilbertY
+export fft_xshear, fft_yshear
 
 include("colourmaps.jl")
 include("eigenbrot.jl")
 include("simple.jl")
 include("fft.jl")
 include("chirpz.jl")
+include("transform.jl")
 
 end
