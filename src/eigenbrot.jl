@@ -5,7 +5,7 @@ Construct an Eigenbrot from a file, which should be a FITS
 file (including a gzipped FITS file), or an image type that
 can be loaded by ImageMagick.
 
-    Eigenbrot(data::Matrix{Complex128}, fft = false)
+    Eigenbrot(data::Matrix{ComplexF64}, fft = false)
 Construct an Eigenbrot from a matrix of complex values.
 
     Eigenbrot(rows::Integer, cols::Integer, fft = false)
@@ -16,17 +16,18 @@ Construct an Eigenbrot of size `rows×cols`, using `f(x, y)` to
 calculate the data values.
 """
 mutable struct Eigenbrot
-    vals::Matrix{Complex128}
+    vals::Matrix{ComplexF64}
     fft::Bool
     have_min_max::Bool
     maxCmp::Float64
     minCmp::Float64
     maxMag::Float64
-    Eigenbrot{T <: Number}(data::Matrix{T}, fft = false) = new(Complex128.(data), fft, false)
+    Eigenbrot(data::Matrix{T}, fft = false) where {T <: Number} =
+        new(ComplexF64.(data), fft, false)
 end
 
 Eigenbrot(rows::Integer, cols::Integer, fft = false) =
-        Eigenbrot(Matrix{Complex128}(rows, cols), fft)
+        Eigenbrot(Matrix{ComplexF64}(undef, rows, cols), fft)
 
 @enum Scale Linear Log Root
 @enum Component RealPart ImagPart Magn Phase
@@ -44,7 +45,7 @@ function Eigenbrot(f::Function, rows::Integer, cols::Integer, fft = false)
     xMin = xMax - cols + 1
     yMax = div(rows, 2) - 1
     yMin = yMax - rows + 1
-    return Eigenbrot([Complex128(f(x, y)) for y in yMin:yMax, x in xMin:xMax], fft)
+    return Eigenbrot([ComplexF64(f(x, y)) for y in yMin:yMax, x in xMin:xMax], fft)
 end
 
 function read_fits(file::AbstractString)
@@ -59,23 +60,24 @@ function read_fits(file::AbstractString)
     if hdu == nothing
         error("No image found in FITS file '$file'")
     end
+    isfft, comment = read_key(hdu, "ISFFT")
     data = read(hdu)
 
     if ndims(data) > 2
         w, h = size(data)
-        cdata = Matrix{Complex128}(h, w)
+        cdata = Matrix{ComplexF64}(undef, h, w)
         for c in 1:w
             for r in 1:h
-                cdata[r, c] = Complex128(data[c, r, 1], data[c, r, 2])
+                cdata[r, c] = ComplexF64(data[c, r, 1], data[c, r, 2])
             end
         end
     elseif ndims(data) == 2
-        cdata = map(x -> Complex128(x), data)
+        cdata = map(x -> ComplexF64(x), data)
         reshape(cdata, size(data, 1), size(data, 2))
     else
-        cdata = map(x -> Complex128(x), data)
+        cdata = map(x -> ComplexF64(x), data)
     end
-    return cdata
+    return Eigenbrot(cdata, isfft)
 end
 
 function read_image(file::AbstractString)
@@ -93,13 +95,13 @@ function read_image(file::AbstractString)
     =#
     img = Gray.(img)
     w, h = size(img)
-    cdata = Matrix{Complex128}(h, w)
+    cdata = Matrix{ComplexF64}(undef, h, w)
     for c in 1:w
         for r in 1:h
-            cdata[h - r + 1, c] = Complex128(round(UInt8, 255 * img[r, c].val))
+            cdata[h - r + 1, c] = ComplexF64(round(UInt8, 255 * img[r, c].val))
         end
     end
-    return cdata
+    return Eigenbrot(cdata)
 end
 
 const fits_magic = b"SIMPLE "
@@ -111,11 +113,10 @@ function Eigenbrot(filename::AbstractString)
     by = read(t, max_magic_len)
     close(t)
     if by[1:length(fits_magic)] == fits_magic || by[1:length(gzip_magic)] == gzip_magic
-        data = read_fits(filename)
+        return read_fits(filename)
     else
-        data = read_image(filename)
+        return read_image(filename)
     end
-    return Eigenbrot(data)
 end
 
 Images.width(eb::Eigenbrot) = size(eb.vals, 2)
@@ -124,17 +125,36 @@ isFFT(eb::Eigenbrot) = eb.fft
 
 for name in (:ndims, :length, :size)
     @eval begin
-        import Base.$name
-        $name(eb::Eigenbrot) = $name(eb.vals)
+        Base.$name(eb::Eigenbrot) = $name(eb.vals)
     end
 end
 
 Base.size(eb::Eigenbrot, args...) = size(eb.vals, args...)
-Base.getindex(eb::Eigenbrot, args...) = getindex(eb.vals, args...)
 
-function Base.setindex!(eb::Eigenbrot, val::Number, args...)
+Base.getindex(eb::Eigenbrot, row::Integer, col::Integer) = getindex(eb.vals, row, col)
+Base.getindex(eb::Eigenbrot,
+              rows::AbstractRange{T},
+              cols::AbstractRange{U}) where {T <: Integer, U <: Integer} =
+                  getindex(eb.vals, rows, cols)
+Base.getindex(eb::Eigenbrot, indices::Vector{T}) where {T <: Integer} =
+    getindex(eb.vals, indices)
+Base.getindex(eb::Eigenbrot, rc::Tuple{T, U}) where {T <: Integer, U <: Integer} =
+                  getindex(eb.vals, rc[1], rc[2])
+
+function Base.setindex!(eb::Eigenbrot, val::Number, row::Integer, col::Integer)
     reset!(eb)
-    setindex!(eb.vals, val, args...)
+    setindex!(eb.vals, val, row, col)
+end
+
+function Base.setindex!(eb::Eigenbrot, val::Number, indices::Vector{T}) where {T <: Integer}
+    reset!(eb)
+    setindex!(eb.vals, val, indices)
+end
+
+function Base.setindex!(eb::Eigenbrot, val::Number,
+                        rc::Tuple{T, U}) where {T <: Integer, U <: Integer}
+    reset!(eb)
+    setindex!(eb.vals, val, rc[1], rc[2])
 end
 
 reset!(eb::Eigenbrot) = (eb.have_min_max = false)
@@ -173,7 +193,7 @@ function FileIO.save(filename::AbstractString, eb::Eigenbrot)
     w = width(eb)
     h = height(eb)
     hlen = w * h
-    lpData = Vector{Float64}(hlen * 2)
+    lpData = Vector{Float64}(undef, hlen * 2)
     real = 1
     imag = 1 + hlen
     for r in 1:h
@@ -202,7 +222,7 @@ and `cmp2`.
 """
 function image(eb::Eigenbrot,
                cmp::ImageSetting,
-               cmp2::Union{Void, ImageSetting} = nothing;
+               cmp2::Union{Nothing, ImageSetting} = nothing;
                colours::Union{Symbol, AbstractString} = :grey)
     w = w2 = width(eb)
     h = height(eb)
@@ -210,7 +230,7 @@ function image(eb::Eigenbrot,
     calculate_ranges!(eb)
     (cmp2 != nothing) && (w2 *= 2)
     pal = palette(colours)
-    img = Matrix{RGB{N0f8}}(h, w2)
+    img = Matrix{RGB{N0f8}}(undef, h, w2)
     calculate_pixels!(img, eb, cmp, pal, 0)
     (cmp2 != nothing) && calculate_pixels!(img, eb, cmp2, pal, h * w)
     return img
@@ -218,7 +238,7 @@ end
 
 FileIO.save(filename::AbstractString, eb::Eigenbrot,
      cmp::ImageSetting,
-     cmp2::Union{Void, ImageSetting} = nothing;
+     cmp2::Union{Nothing, ImageSetting} = nothing;
      colours::Union{Symbol, AbstractString} = :grey) =
          save(filename, image(eb, cmp, cmp2, colours = colours))
 
@@ -330,11 +350,11 @@ function pixel(eb::Eigenbrot, x::Real, y::Real)
     xMin = xMax - w
     yMax = div(h, 2)
     yMin = yMax - h
-    (round(Int, 1 + h * (y - yMin) / (yMax - yMin)),
-     round(Int, 1 + w * (x - xMin) / (xMax - xMin)))
+    (round(Int, 1 + h * (y - yMin) / height(eb)),
+     round(Int, 1 + w * (x - xMin) / width(eb)))
 end
 
-pixel{T <: Real, U <: Real}(eb::Eigenbrot, xy::Tuple{T, U}) =
+pixel(eb::Eigenbrot, xy::Tuple{T, U}) where {T <: Real, U <: Real} =
     pixel(eb, xy[1], xy[2])
 
 """
@@ -349,9 +369,9 @@ function coords(eb::Eigenbrot, r::Integer, c::Integer)
     h, w = size(eb.vals)
     xMin = div(w, 2) - w
     yMin = div(h, 2) - h
-    (xMin + (c - 1) * (xMax - xMin) / w,
-     yMin + (r - 1) * (yMax - yMin) / h)
+    (xMin + (c - 1) * width(eb) / w,
+     yMin + (r - 1) * height(eb) / h)
 end
 
-coords{T <: Integer, U <: Integer}(eb::Eigenbrot, rc::Tuple{T, U}) =
+coords(eb::Eigenbrot, rc::Tuple{T, U}) where {T <: Integer, U <: Integer} =
     coords(eb, rc[1], rc[2])

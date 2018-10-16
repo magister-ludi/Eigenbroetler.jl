@@ -1,7 +1,7 @@
 
 """
     alt_xy(r::Integer, c::Integer)
-    alt_xy{T <: Integer, U <: Integer}(rc::Tuple{T, U})
+    alt_xy(rc::Tuple{T, U}) where {T <: Integer, U <: Integer}
 Construct a matrix with `r` rows and `c` columns, with elements
 alternating between `+1.0` and `-1.0`.
 The first element is +1.
@@ -14,11 +14,11 @@ function alt_xy(r::Integer, c::Integer)
     reshape(b, r, c)
 end
 
-alt_xy{T <: Integer, U <: Integer}(rc::Tuple{T, U}) = alt_xy(rc[1], rc[2])
+alt_xy(rc::Tuple{T, U}) where {T <: Integer, U <: Integer} = alt_xy(rc[1], rc[2])
 
 """
     alt_x(r::Integer, c::Integer)
-    alt_x{T <: Integer, U <: Integer}(rc::Tuple{T, U})
+    alt_x(rc::Tuple{T, U}) where {T <: Integer, U <: Integer}
 Construct a matrix with `r` rows and `c` columns, with columns
 alternating between `+1.0` and `-1.0`.
 The first column is +1.
@@ -30,11 +30,11 @@ function alt_x(r::Integer, c::Integer)
     reshape(b, r, c)
 end
 
-alt_x{T <: Integer, U <: Integer}(rc::Tuple{T, U}) = alt_x(rc[1], rc[2])
+alt_x(rc::Tuple{T, U}) where {T <: Integer, U <: Integer} = alt_x(rc[1], rc[2])
 
 """
     alt_y(r::Integer, c::Integer)
-    alt_y{T <: Integer, U <: Integer}(rc::Tuple{T, U})
+    alt_y(rc::Tuple{T, U}) where {T <: Integer, U <: Integer}
 Construct a matrix with `r` rows and `c` columns, with rows
 alternating between `+1.0` and `-1.0`.
 The first row is +1.
@@ -46,7 +46,7 @@ function alt_y(r::Integer, c::Integer)
     reshape(b, r, c)
 end
 
-alt_y{T <: Integer, U <: Integer}(rc::Tuple{T, U}) = alt_y(rc[1], rc[2])
+alt_y(rc::Tuple{T, U}) where {T <: Integer, U <: Integer} = alt_y(rc[1], rc[2])
 
 """
     fft(eb[, recentre = true])
@@ -55,7 +55,7 @@ Returns the two-dimensional DFT of Eigenbrot `eb`. If
 at the coordinate origin is at the central location of
 the data.
 """
-function Base.fft(eb::Eigenbrot, recentre::Bool = true)
+function FFTW.fft(eb::Eigenbrot, recentre::Bool = true)
     w = width(eb)
     h = height(eb)
     scale = 1.0 / sqrt(h * w)

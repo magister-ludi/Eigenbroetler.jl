@@ -22,22 +22,14 @@ function chirpZScaleX(eb::Eigenbrot, factor::Real)
     h, w = size(eb)
     newDim = Placeholder(h, round(Int, w * factor))
     sc = scaleDataType(
-        # newDim
-        newDim,
-        # nTiles
-        Placeholder(1, ceil(Int, newDim.c / w)),
-        # paddedDim
-        Placeholder(h, 2 * w),
-        # offset
-        Placeholder(0, w >> 1),
-        # scale
-        sqrt(2.0),
-        # alpha
-        Placeholder(0.0, π / (w * factor)),
-        # isFFT
-        eb.fft,
-        # transform
-        fftx
+        newDim,                                  # newDim
+        Placeholder(1, ceil(Int, newDim.c / w)), # nTiles
+        Placeholder(h, 2 * w),                   # paddedDim
+        Placeholder(0, w >> 1),                  # offset
+        sqrt(2.0),                               # scale
+        Placeholder(0.0, π / (w * factor)),      # alpha
+        eb.fft,                                  # isFFT
+        fftx                                     # transform
     )
     scale_1d(eb, sc)
 end
@@ -47,29 +39,20 @@ function chirpZScaleY(eb::Eigenbrot, factor::Real)
     h, w = size(eb)
     newDim = Placeholder(round(Int, h * factor), w)
     sc = scaleDataType(
-        # newDim
-        newDim,
-        # nTiles
-        Placeholder(ceil(Int, newDim.r / h), 1),
-        # paddedDim
-        Placeholder(2 * h, w),
-        # offset
-        Placeholder(h >> 1, 0),
-        # scale
-        sqrt(2.0),
-        # alpha
-        Placeholder(π / (h * factor), 0.0),
-        # isFFT
-        eb.fft,
-        # transform
-        ffty
+        newDim,                                  # newDim
+        Placeholder(ceil(Int, newDim.r / h), 1), # nTiles
+        Placeholder(2 * h, w),                   # paddedDim
+        Placeholder(h >> 1, 0),                  # offset
+        sqrt(2.0),                               # scale
+        Placeholder(π / (h * factor), 0.0),      # alpha
+        eb.fft,                                  # isFFT
+        ffty                                     # transform
     )
     scale_1d(eb, sc)
 end
 
 function scale_1d(input::Eigenbrot, sc::scaleDataType)
     h, w = size(input)
-
     result = Eigenbrot(sc.newDim.r, sc.newDim.c, sc.isFFT)
     quadProd1 = Eigenbrot(sc.paddedDim.r, sc.paddedDim.c, !sc.isFFT)
     fill!(quadProd1.vals, 0.0)
@@ -102,7 +85,7 @@ function scale_1d(input::Eigenbrot, sc::scaleDataType)
                 end
             end
             quadFFT2 = sc.transform(quadProd2, true)
-            fftProd = quadFFT2 .* quadFFT1
+            fftProd = quadFFT2 * quadFFT1
             conv = sc.transform(fftProd, true)
             for cc in firstXpixel:w
                 r2x = (div(w, 2) - cc + 1 + (deltaHor - 1) * w) ^ 2 * sc.alpha.c

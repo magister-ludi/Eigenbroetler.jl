@@ -187,8 +187,6 @@ function fourierRotation(eb::Eigenbrot, θ::Real, expand::Bool = true)
             wm = max(wm, maximum(cnrs[1, :]) - minimum(cnrs[1, :]))
             hm = max(hm, maximum(cnrs[2, :]) - minimum(cnrs[2, :]))
         end
-        @printf("%5.1f,%5.1f,%10.2f,%10.2f,%10.2f\n",
-                180 * θ / π, 180 * ϕ / π, max(hm, wm), hm, wm)
         lr = ceil(Int, (wm - ww) / 2)
         tb = ceil(Int, (hm - hh) / 2)
         result = pad(result, left = lr, right = lr, top = tb, bottom = tb)

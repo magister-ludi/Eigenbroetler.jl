@@ -21,9 +21,9 @@ end of a line and is ignored.
 """
 function readpalette(stream::IO)
     i = 0
-    pal = Vector{RGB{N0f8}}(NUM_COLOURS)
+    pal = Vector{RGB{N0f8}}(undef, NUM_COLOURS)
     for line in readlines(stream)
-        line = replace(strip(line), r"\s*#.*", "")
+        line = replace(strip(line), r"\s*#.*" => "")
         if isempty(line)
             continue
         end
@@ -69,7 +69,7 @@ function palette(name::Symbol)
         return palettes[name]
     else
         if !haskey(palettes, :grey)
-            pal = Vector{RGB{N0f8}}(NUM_COLOURS)
+            pal = Vector{RGB{N0f8}}(undef, NUM_COLOURS)
             for i in 1:NUM_COLOURS
                 g = (i - 1) / MAX_COLOUR
                 pal[i] = RGB{N0f8}(g, g, g)

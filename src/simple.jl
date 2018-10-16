@@ -1,8 +1,13 @@
 
-for name in (:real, :imag, :angle, :abs, :conj)
+for name in (:real, :imag, :conj)
     @eval begin
-        import Base.$name
-        $name(eb::Eigenbrot) = Eigenbrot(Array{Complex128}($name(eb.vals)))
+        Base.$name(eb::Eigenbrot) = Eigenbrot(Array{ComplexF64}($name(eb.vals)), eb.fft)
+    end
+end
+
+for name in (:angle, :abs)
+    @eval begin
+        Base.$name(eb::Eigenbrot) = Eigenbrot(Array{ComplexF64}($name.(eb.vals)), eb.fft)
     end
 end
 
@@ -10,27 +15,23 @@ phase(eb::Eigenbrot) = angle(eb)
 
 import Base: (+), (-), (*), (/), (^)
 
-(+)(eb1::Eigenbrot, eb2::Eigenbrot) = Eigenbrot(eb1.vals .+ eb2.vals)
-(+)(eb1::Eigenbrot, n::Number) = Eigenbrot(eb1.vals + n)
+(+)(eb1::Eigenbrot, eb2::Eigenbrot) = Eigenbrot(eb1.vals .+ eb2.vals, eb1.fft)
+(+)(eb1::Eigenbrot, n::Number) = Eigenbrot(eb1.vals .+ n, eb1.fft)
 (+)(n::Number, eb1::Eigenbrot) = eb1 + n
-(-)(eb1::Eigenbrot, eb2::Eigenbrot) = Eigenbrot(eb1.vals .- eb2.vals)
-(-)(eb1::Eigenbrot, n::Number) = Eigenbrot(eb1.vals .- n)
-(-)(n::Number, eb1::Eigenbrot) = Eigenbrot(n .- eb1.vals)
+(-)(eb1::Eigenbrot, eb2::Eigenbrot) = Eigenbrot(eb1.vals .- eb2.vals, eb1.fft)
+(-)(eb1::Eigenbrot, n::Number) = Eigenbrot(eb1.vals .- n, eb1.fft)
+(-)(n::Number, eb1::Eigenbrot) = Eigenbrot(n .- eb1.vals, eb1.fft)
 
-(*)(eb::Eigenbrot, x::Number) = Eigenbrot(x * eb)
-(*)(x::Number, eb::Eigenbrot) = Eigenbrot(x .* eb.vals)
-(/)(eb::Eigenbrot, x::Number) = Eigenbrot(eb.vals ./ x)
-
-Base.broadcast(::typeof(*), eb1::Eigenbrot, eb2::Eigenbrot) =
-    Eigenbrot(eb1.vals .* eb2.vals)
-
-Base.broadcast(::typeof(/), eb1::Eigenbrot, eb2::Eigenbrot) =
-    Eigenbrot(eb1.vals ./ eb2.vals)
+(*)(eb::Eigenbrot, x::Number) = x * eb
+(*)(x::Number, eb::Eigenbrot) = Eigenbrot(x * eb.vals, eb.fft)
+(*)(eb1::Eigenbrot, eb2::Eigenbrot) = Eigenbrot(eb1.vals .* eb2.vals, eb1.fft)
+(/)(eb::Eigenbrot, x::Number) = Eigenbrot(eb.vals / x, eb.fft)
+(/)(eb1::Eigenbrot, eb2::Eigenbrot) = Eigenbrot(eb1.vals ./ eb2.vals, eb1.fft)
 
 #=
 Utility method used by pad() methods, not exported.
 =#
-function _pad(v::Matrix{Complex128}, value::Complex,
+function _pad(v::Matrix{ComplexF64}, value::Complex,
                left::Integer, top::Integer, right::Integer, bottom::Integer)
     rows, cols = size(v)
     cols_out = cols + left + right
@@ -69,46 +70,16 @@ with `value`.
 """
 pad(eb::Eigenbrot, value::Number = 0.0im; left::Integer = 0, top::Integer = 0,
         right::Integer = 0, bottom::Integer = 0) =
-    Eigenbrot(_pad(eb.vals, Complex128(value), left, top, right, bottom), eb.fft)
+    Eigenbrot(_pad(eb.vals, ComplexF64(value), left, top, right, bottom), eb.fft)
 
 pad(eb::Eigenbrot, value::Real, margin::Integer) =
-    Eigenbrot(_pad(eb.vals, Complex128(value), margin, margin, margin, margin), eb.fft)
+    Eigenbrot(_pad(eb.vals, ComplexF64(value), margin, margin, margin, margin), eb.fft)
 
 pad(eb::Eigenbrot, value::Complex, margin::Integer) =
     Eigenbrot(_pad(eb.vals, value, margin, margin, margin, margin), eb.fft)
 
 pad(eb::Eigenbrot, margin::Integer) =
    pad(eb, 0.0im, margin)
-
-"""
-    pow2pad(eb::Eigenbrot)
-Create a new `Eigenbrot` which has a copy of the data
-padded by zeros so that its dimensions are powers of 2
-(see also `pow2pad!`).
-"""
-function pow2pad(eb::Eigenbrot)
-    rows, cols = size(eb.vals)
-    rows2 = nextpow2(rows)
-    cols2 = nextpow2(cols)
-    eb2 = if rows == rows2 && cols == cols2
-        copy(eb)
-    else
-        pad(eb, top = rows2 - rows, right = cols2 - cols)
-    end
-    return eb2
-end
-
-"""
-    pow2pad!(eb::Eigenbrot)
-Replace the data of `eb` with the original data
-padded by zeros so that its dimensions are powers of 2
-(see also `pow2pad`).
-"""
-function pow2pad!(eb::Eigenbrot)
-    eb2 = pow2pad(eb)
-    eb.vals = eb2.vals
-    return eb
-end
 
 function flipver(eb::Eigenbrot)
     flip = copy(eb)

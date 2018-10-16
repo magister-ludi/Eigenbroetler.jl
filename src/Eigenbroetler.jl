@@ -1,24 +1,21 @@
 
-isdefined(Base, :__precompile__) && __precompile__()
-
 module Eigenbroetler
 
-using FITSIO
 using FileIO
-using Images
+using FFTW
+using FITSIO
 using FITSIO.Libcfitsio
+using Images
 
 export Eigenbrot
-export width, height, size
-export isValid, isFFT
-export save, show
-export fill!, getindex, setindex!
-export index, coords
+export width, height
+export size
+export isFFT, save
 export fft, fftx, ffty, removeDC
 export ImageSetting
 export Linear, Log, Root
 export RealPart, ImagPart, Magn, Phase
-export image, pad, pow2pad, pow2pad!
+export image, pad
 export flipver, fliphor, swapxy
 export pixel, coords
 export chirpZScale, chirpZScaleX, chirpZScaleY

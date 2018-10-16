@@ -4,7 +4,7 @@ using Eigenbroetler
 
 function starry(x::Number, y::Number)
     r = sqrt(x * x + y * y)
-    ϕ = atan2(y, x)
+    ϕ = atan(y, x)
     return sin(r * (3 + cos(7 * ϕ)) / 4)
 end
 
