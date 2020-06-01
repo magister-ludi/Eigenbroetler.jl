@@ -14,6 +14,9 @@ Construct an unitialised Eigenbrot of size `rows×cols`.
     Eigenbrot(f::Function, rows::Integer, cols::Integer, fft = false)
 Construct an Eigenbrot of size `rows×cols`, using `f(x, y)` to
 calculate the data values.
+
+    Eigenbrot(img::Matrix{Gray{T}}, fft = false) where {T}
+Construct an Eigenbrot from a grey scale image.
 """
 mutable struct Eigenbrot
     vals::Matrix{ComplexF64}
@@ -47,6 +50,20 @@ function Eigenbrot(f::Function, rows::Integer, cols::Integer, fft = false)
     yMin = yMax - rows + 1
     return Eigenbrot([ComplexF64(f(x, y)) for y in yMin:yMax, x in xMin:xMax], fft)
 end
+
+function Eigenbrot(img::Matrix{Gray{T}}, fft = false) where {T}
+    h, w = size(img)
+    cdata = Matrix{ComplexF64}(undef, h, w)
+    for c in 1:w
+        for r in 1:h
+            cdata[h - r + 1, c] = ComplexF64(round(UInt8, 255 * img[r, c].val))
+        end
+    end
+    return Eigenbrot(cdata, fft)
+end
+
+Eigenbrot(img::Matrix{C}, fft = false) where {C <: Colorant} =
+    Eigenbrot(Gray.(img), fft)
 
 function read_fits(file::AbstractString)
     fits = FITS(file)
@@ -93,15 +110,7 @@ function read_image(file::AbstractString)
     Eigenbroetler. See
     https://en.wikipedia.org/wiki/Grayscale
     =#
-    img = Gray.(img)
-    w, h = size(img)
-    cdata = Matrix{ComplexF64}(undef, h, w)
-    for c in 1:w
-        for r in 1:h
-            cdata[h - r + 1, c] = ComplexF64(round(UInt8, 255 * img[r, c].val))
-        end
-    end
-    return Eigenbrot(cdata)
+    return Eigenbrot(img)
 end
 
 const fits_magic = b"SIMPLE "
