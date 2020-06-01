@@ -1,0 +1,22 @@
+name = "Eigenbroetler"
+uuid = "32f19457-582a-4c6a-86cc-3a3a3ddc7387"
+authors = ["Michael Oldfield <magister_ludi_github@yahoo.com.au>"]
+version = "0.2.0"
+
+[deps]
+FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
+FITSIO = "525bcba6-941b-5504-bd06-fd0dc1a4d2eb"
+FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
+Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
+
+[compat]
+FileIO = "1"
+julia = "1"
+
+[extras]
+FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+ImageMagick = "6218d12a-5da1-5696-b52f-db25d2ecc6d1"
+
+[targets]
+test = ["FileIO", "ImageMagick", "Test"]
