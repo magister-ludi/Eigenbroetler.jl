@@ -13,4 +13,4 @@ function fibonacci(x::Number, y::Number)
 end
 
 eb = Eigenbrot(fibonacci, 512, 512)
-save("fibonacci.png", eb, ImageSetting(RealPart, Linear))
+save("fibonacci.png", eb, ImageSetting(RealPart, LinearScale))

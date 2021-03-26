@@ -8,4 +8,4 @@ function lachryma(x::Number, y::Number)
 end
 
 eb = fft(Eigenbrot(lachryma, 512, 512))
-save("lachryma.png", eb, ImageSetting(Magn, Log), colours = :rainbow)
+save("lachryma.png", eb, ImageSetting(Magn, LogScale), colours = :rainbow)

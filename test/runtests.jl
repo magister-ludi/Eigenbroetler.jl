@@ -32,7 +32,7 @@ end
     @testset "Files" begin
         eb = Eigenbrot(sample, 64, 64)
         testfile = tempname() * ".png"
-        save(testfile, eb, ImageSetting(RealPart, Linear))
+        save(testfile, eb, ImageSetting(RealPart, LinearScale))
         pngmagic = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
         t = open(testfile)
         by = read(t, length(pngmagic))
@@ -171,11 +171,11 @@ end
         yscale = 5//4
         eb = random(8, 8)
 
-        ebs = chirpZScale(eb, xscale, yscale)
+        ebs = scale_chirpz(eb, xscale, yscale)
         @test size(ebs) == (10, 12)
-        ebs = chirpZScaleX(eb, xscale)
+        ebs = scale_x_chirpz(eb, xscale)
         @test size(ebs) == (8, 12)
-        ebs = chirpZScaleY(eb, yscale)
+        ebs = scale_y_chirpz(eb, yscale)
         @test size(ebs) == (10, 8)
     end
 end

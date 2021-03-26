@@ -1,9 +1,9 @@
 
 """
-    hilbertX(eb::Eigenbrot)
+    hilbert_x(eb::Eigenbrot)
 Return the Hilbert x-transform of `eb`.
 """
-function hilbertX(eb::Eigenbrot)
+function hilbert_x(eb::Eigenbrot)
     nd = copy(eb)
     h, w = size(nd)
     centre_c = 1 + w >> 1
@@ -24,10 +24,10 @@ function hilbertX(eb::Eigenbrot)
 end
 
 """
-    hilbertY(eb::Eigenbrot)
+    hilbert_y(eb::Eigenbrot)
 Return the Hilbert x-transform of `eb`.
 """
-function hilbertY(eb::Eigenbrot)
+function hilbert_y(eb::Eigenbrot)
     nd = copy(eb)
     h, w = size(nd)
     centre_c = 1 + w >> 1
@@ -161,6 +161,8 @@ otherwise the aliasing described in Larkin et al. occurs.
 """
 function fourierRotation(eb::Eigenbrot, θ::Real, expand::Bool = true)
     h, w = size(eb)
+    θ = -θ  # reverse rotation direction
+
     # Deconstruct θ as the sum of an integral number, n90,
     # of right angles, and a remainder, ϕ, with absolute
     # value less than π/4...

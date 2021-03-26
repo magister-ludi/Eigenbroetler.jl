@@ -12,4 +12,4 @@ function sunflower(x::Number, y::Number)
 end
 
 eb = Eigenbrot(sunflower, 512, 512)
-save("sunflower.png", eb, ImageSetting(RealPart, Linear), colours = :rainbow)
+save("sunflower.png", eb, ImageSetting(RealPart, LinearScale), colours = :rainbow)

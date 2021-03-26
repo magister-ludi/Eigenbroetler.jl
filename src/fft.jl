@@ -59,11 +59,16 @@ function FFTW.fft(eb::Eigenbrot, recentre::Bool = true)
     w = width(eb)
     h = height(eb)
     scale = 1.0 / sqrt(h * w)
-    alt = alt_xy(h, w)
-    data = recentre ? alt .* eb.vals : copy(eb.vals)
-    eb.fft ? fft!(data) : bfft!(data)
-    trf = Eigenbrot(scale * (recentre ? alt .* data : data), !eb.fft)
-    return trf
+    if recentre
+        alt = alt_xy(h, w)
+        data = alt .* eb.vals
+        eb.fft ? fft!(data) : bfft!(data)
+        Eigenbrot(scale * (alt .* data), !eb.fft)
+    else
+        data = copy(eb.vals)
+        eb.fft ? fft!(data) : bfft!(data)
+        Eigenbrot(scale * data, !eb.fft)
+    end
 end
 
 """
@@ -77,10 +82,16 @@ function fftx(eb::Eigenbrot, recentre::Bool = true)
     w = width(eb)
     h = height(eb)
     scale = 1.0 / sqrt(w)
-    alt = alt_x(h, w)
-    data = recentre ? alt .* eb.vals : copy(eb.vals)
-    eb.fft ? fft!(data, 2) : bfft!(data, 2)
-    return Eigenbrot(scale * (recentre ? alt .* data : data), !eb.fft)
+    if recentre
+        alt = alt_x(h, w)
+        data =  alt .* eb.vals
+        eb.fft ? fft!(data, 2) : bfft!(data, 2)
+        Eigenbrot(scale * (alt .* data), !eb.fft)
+    else
+        data = copy(eb.vals)
+        eb.fft ? fft!(data, 2) : bfft!(data, 2)
+        Eigenbrot(scale * data, !eb.fft)
+    end
 end
 
 """
@@ -94,10 +105,16 @@ function ffty(eb::Eigenbrot, recentre::Bool = true)
     w = width(eb)
     h = height(eb)
     scale = 1.0 / sqrt(h)
-    alt = alt_y(h, w)
-    data = recentre ? alt .* eb.vals : copy(eb.vals)
-    eb.fft ? fft!(data, 1) : bfft!(data, 1)
-    return Eigenbrot(scale * (recentre ? alt .* data : data), !eb.fft)
+    if recentre
+        alt = alt_y(h, w)
+        data = alt .* eb.vals
+        eb.fft ? fft!(data, 1) : bfft!(data, 1)
+        Eigenbrot(scale * (alt .* data), !eb.fft)
+    else
+        data = copy(eb.vals)
+        eb.fft ? fft!(data, 1) : bfft!(data, 1)
+        Eigenbrot(scale * data, !eb.fft)
+    end
 end
 
 """

@@ -8,5 +8,5 @@ function scaled_sinusoid(x::Number, y::Number)
 end
 
 eb = fft(Eigenbrot(scaled_sinusoid, 512, 512))
-save("scaled_sinusoid.png", eb, ImageSetting(Magn, Log),
+save("scaled_sinusoid.png", eb, ImageSetting(Magn, LogScale),
      colours = joinpath(dirname(@__FILE__), "iron.map"))

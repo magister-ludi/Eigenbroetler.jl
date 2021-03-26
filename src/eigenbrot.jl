@@ -32,7 +32,7 @@ end
 Eigenbrot(rows::Integer, cols::Integer, fft = false) =
         Eigenbrot(Matrix{ComplexF64}(undef, rows, cols), fft)
 
-@enum Scale Linear Log Root
+@enum Scale LinearScale LogScale RootScale
 @enum Component RealPart ImagPart Magn Phase
 
 struct ImageSetting
@@ -272,10 +272,10 @@ function calculate_pixels!(img::Matrix{RGB{N0f8}}, eb::Eigenbrot,
         end
     elseif cmp.c == Magn
         # Magnitude part
-        scaler = cmp.s == Linear ? scaleLinear : (cmp.s == Log ? scaleLogarithmic : scaleRoot)
+        scaler = cmp.s == LinearScale ? scaleLinear : (cmp.s == LogScale ? scaleLogarithmic : scaleRoot)
         minValue = 0.0
         maxValue = eb.maxMag
-        offset = (cmp.s == Log) ? 1.0 : 0.0
+        offset = (cmp.s == LogScale) ? 1.0 : 0.0
         if isapprox(maxValue, minValue)
             scaleFactor = (NUM_COLOURS >> 1) - 1.0
             minValue -= offset

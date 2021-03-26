@@ -9,5 +9,5 @@ function starry(x::Number, y::Number)
 end
 
 eb = Eigenbrot(starry, 512, 512)
-save("starry.png", eb, ImageSetting(RealPart, Linear))
-save("starry_dft.png", fft(eb), ImageSetting(Magn, Log))
+save("starry.png", eb, ImageSetting(RealPart, LinearScale))
+save("starry_dft.png", fft(eb), ImageSetting(Magn, LogScale))

@@ -9,5 +9,5 @@ function high_freq_sinusoid(x::Number, y::Number)
 end
 
 eb = Eigenbrot(high_freq_sinusoid, 512, 512)
-save("high_freq_sinusoid.png", eb, ImageSetting(RealPart, Linear))
-save("high_freq_sinusoid_dft.png", fft(eb), ImageSetting(Magn, Log))
+save("high_freq_sinusoid.png", eb, ImageSetting(RealPart, LinearScale))
+save("high_freq_sinusoid_dft.png", fft(eb), ImageSetting(Magn, LogScale))

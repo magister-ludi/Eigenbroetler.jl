@@ -14,10 +14,10 @@ struct scaleDataType
     transform::Function
 end
 
-chirpZScale(eb::Eigenbrot, xfactor::Real, yfactor::Real) =
-    chirpZScaleY(chirpZScaleX(eb,xfactor), yfactor)
+scale_chirpz(eb::Eigenbrot, xfactor::Real, yfactor::Real) =
+    scale_y_chirpz(scale_x_chirpz(eb,xfactor), yfactor)
 
-function chirpZScaleX(eb::Eigenbrot, factor::Real)
+function scale_x_chirpz(eb::Eigenbrot, factor::Real)
     factor == 1 && return copy(eb)
     h, w = size(eb)
     newDim = Placeholder(h, round(Int, w * factor))
@@ -34,7 +34,7 @@ function chirpZScaleX(eb::Eigenbrot, factor::Real)
     scale_1d(eb, sc)
 end
 
-function chirpZScaleY(eb::Eigenbrot, factor::Real)
+function scale_y_chirpz(eb::Eigenbrot, factor::Real)
     factor == 1 && return copy(eb)
     h, w = size(eb)
     newDim = Placeholder(round(Int, h * factor), w)
