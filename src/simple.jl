@@ -31,8 +31,14 @@ import Base: (+), (-), (*), (/), (^)
 #=
 Utility method used by pad() methods, not exported.
 =#
-function _pad(v::Matrix{ComplexF64}, value::Complex,
-               left::Integer, top::Integer, right::Integer, bottom::Integer)
+function _pad(
+    v::Matrix{ComplexF64},
+    value::Complex,
+    left::Integer,
+    top::Integer,
+    right::Integer,
+    bottom::Integer,
+)
     rows, cols = size(v)
     cols_out = cols + left + right
     rows_out = rows + top + bottom
@@ -56,21 +62,37 @@ end
 
 """
     pad(eb::Eigenbrot, margin::Integer)
-Pad edges of `eb` by `margin` pixels. If `margin` is negative,
-extend by that amount, filling the new pixels with zero.
 
-    pad(eb::Eigenbrot, value, margin::Integer)
-Pad edges of `eb` by `margin` pixels. If `margin` is negative,
-extend by that amount, filling the new pixels with `value`.
-
-    pad(eb::Eigenbrot, value = 0; left::Integer = 0, top::Integer = 0, right::Integer = 0, bottom::Integer = 0)
-Pad the named edges of `eb` by the number of pixels given. Negative
-edge values will extend by the relevant amount, filling the new pixels
-with `value`.
+Pad edges of `eb` by `margin` pixels, filling the new pixels
+with zero. If `margin` is negative, crop by that amount.
 """
-pad(eb::Eigenbrot, value::Number = 0.0im; left::Integer = 0, top::Integer = 0,
-        right::Integer = 0, bottom::Integer = 0) =
-    Eigenbrot(_pad(eb.vals, ComplexF64(value), left, top, right, bottom), eb.fft)
+pad(eb::Eigenbrot, margin::Integer)
+
+"""
+    pad(eb::Eigenbrot, value, margin::Integer)
+
+Pad edges of `eb` by `margin` pixels, filling the new pixels
+with `value`. If `margin` is negative, crop by that amount.
+"""
+pad(eb::Eigenbrot, value, margin::Integer)
+
+"""
+    pad(eb::Eigenbrot, value = 0; left::Integer = 0, top::Integer = 0, right::Integer = 0, bottom::Integer = 0)
+
+Pad the named edges of `eb` by the number of pixels given in each
+direction, filling the new pixels with `value`. Negative edge values
+will crop by the relevant amount.
+"""
+pad(
+    eb::Eigenbrot,
+    value::Number = 0.0im;
+    left::Integer = 0,
+    top::Integer = 0,
+    right::Integer = 0,
+    bottom::Integer = 0,
+) = Eigenbrot(_pad(eb.vals, ComplexF64(value), left, top, right, bottom), eb.fft)
+
+#pad(eb::Eigenbrot, value = 0; left::Integer = 0, top::Integer = 0, right::Integer = 0, bottom::Integer = 0)
 
 pad(eb::Eigenbrot, value::Real, margin::Integer) =
     Eigenbrot(_pad(eb.vals, ComplexF64(value), margin, margin, margin, margin), eb.fft)
@@ -78,13 +100,12 @@ pad(eb::Eigenbrot, value::Real, margin::Integer) =
 pad(eb::Eigenbrot, value::Complex, margin::Integer) =
     Eigenbrot(_pad(eb.vals, value, margin, margin, margin, margin), eb.fft)
 
-pad(eb::Eigenbrot, margin::Integer) =
-   pad(eb, 0.0im, margin)
+pad(eb::Eigenbrot, margin::Integer) = pad(eb, 0.0im, margin)
 
 function flipver(eb::Eigenbrot)
     flip = copy(eb)
     h = size(flip, 1)
-    for r in 1:h
+    for r = 1:h
         reverse!(@view flip.vals[r, :])
     end
     return flip
@@ -93,7 +114,7 @@ end
 function fliphor(eb::Eigenbrot)
     flip = copy(eb)
     w = size(flip, 2)
-    for c in 1:w
+    for c = 1:w
         reverse!(@view flip.vals[:, c])
     end
     return flip
@@ -103,12 +124,12 @@ function swapxy(eb::Eigenbrot, xflip = false)
     h, w = size(eb)
     swap = Eigenbrot(w, h)
     if xflip
-        for c in 1:h
+        for c = 1:h
             swap.vals[:, c] = @view eb.vals[c, :]
         end
     else
-        for c in 1:h
-            swap.vals[w:-1:1, h-c+1] = @view eb.vals[c, :]
+        for c = 1:h
+            swap.vals[w:-1:1, h - c + 1] = @view eb.vals[c, :]
         end
     end
     return swap

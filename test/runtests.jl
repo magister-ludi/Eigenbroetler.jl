@@ -1,13 +1,12 @@
 using Eigenbroetler
 using Test
 
-random(rows::Integer, cols::Integer) =
-    Eigenbrot(rand(ComplexF64, rows, cols), rand(Bool))
+random(rows::Integer, cols::Integer) = Eigenbrot(rand(ComplexF64, rows, cols), rand(Bool))
 
 function sample(x, y)
     θ = angle(x + y * im)
     r = hypot(x, y)
-    x^2 - y^2 - im*(r * cos(θ))
+    x^2 - y^2 - im * (r * cos(θ))
 end
 
 @testset "Eigenbroetler" begin
@@ -18,7 +17,7 @@ end
             end
             r = sqrt(x * x + y * y)
             ϕ = atan(y, x)
-            return cos(30 * log(r) + 13 * ϕ) ^ 2 + cos(20 * log(r) - 11 * ϕ) ^ 2
+            return cos(30 * log(r) + 13 * ϕ)^2 + cos(20 * log(r) - 11 * ϕ)^2
         end
         @test height(eb) == 512
         @test width(eb) == 512
@@ -60,15 +59,15 @@ end
 
     @testset "Indexing" begin
         eb = Eigenbrot(50, 50)
-        for c in 1:50
-            for r in 1:50
+        for c = 1:50
+            for r = 1:50
                 val = rand(ComplexF64)
                 eb[r, c] = val
                 @test val == eb[r, c]
             end
         end
-        for c in 1:10
-            for r in 1:10
+        for c = 1:10
+            for r = 1:10
                 xy = x, y = coords(eb, r, c)
                 @test pixel(eb, x, y) == (r, c)
                 @test pixel(eb, xy) == (r, c)
@@ -149,10 +148,10 @@ end
         padded = pad(eb, padvalue, left = l, top = t, right = r, bottom = b)
         @test size(padded) == size(eb) .+ (t + b, l + r)
         @test all(padded.vals[1:b, :] .== padvalue)
-        @test all(padded.vals[end-t+1:end, :] .== padvalue)
+        @test all(padded.vals[(end - t + 1):end, :] .== padvalue)
         @test all(padded.vals[:, 1:l] .== padvalue)
-        @test all(padded.vals[:, end-r+1:end] .== padvalue)
-        @test padded.vals[b+1:end-t, l+1:end-r] == eb.vals
+        @test all(padded.vals[:, (end - r + 1):end] .== padvalue)
+        @test padded.vals[(b + 1):(end - t), (l + 1):(end - r)] == eb.vals
     end
 
     @testset "Fourier" begin
@@ -160,6 +159,7 @@ end
         for ft in [fftx, ffty, fft]
             ebfft = ft(eb)
             ebfft2 = ft(ebfft)
+            Δ = eb.vals .- ebfft2.vals
             @test eb.vals ≈ ebfft2.vals
             @test eb.fft == ebfft2.fft
         end
@@ -167,10 +167,9 @@ end
         nodcff = fft(nodc)
         @test isapprox(nodcff[pixel(nodcff, 0, 0)], 0, atol = 1e-15)
 
-        xscale = 3//2
-        yscale = 5//4
+        xscale = 3 // 2
+        yscale = 5 // 4
         eb = random(8, 8)
-
         ebs = scale_chirpz(eb, xscale, yscale)
         @test size(ebs) == (10, 12)
         ebs = scale_x_chirpz(eb, xscale)

@@ -32,9 +32,11 @@ function readpalette(stream::IO)
             break
         end
         r, g, b = split(line)
-        pal[i] = RGB{N0f8}(parse(Float32, r) / MAX_COLOUR,
-                           parse(Float32, g) / MAX_COLOUR,
-                           parse(Float32, b) / MAX_COLOUR)
+        pal[i] = RGB{N0f8}(
+            parse(Float32, r) / MAX_COLOUR,
+            parse(Float32, g) / MAX_COLOUR,
+            parse(Float32, b) / MAX_COLOUR,
+        )
     end
     while i < NUM_COLOURS
         i += 1
@@ -54,10 +56,7 @@ of $NUM_COLOURS greys.
 palette(filename::AbstractString) = palette(Symbol(filename))
 
 function palette(name::Symbol)
-    paths = [
-        "$name",
-        joinpath(dirname(@__FILE__), "maps", "$name.map")
-    ]
+    paths = ["$name", joinpath(dirname(@__FILE__), "maps", "$name.map")]
     if haskey(palettes, name)
         return palettes[name]
     elseif any(ispath, paths)
@@ -70,7 +69,7 @@ function palette(name::Symbol)
     else
         if !haskey(palettes, :grey)
             pal = Vector{RGB{N0f8}}(undef, NUM_COLOURS)
-            for i in 1:NUM_COLOURS
+            for i = 1:NUM_COLOURS
                 g = (i - 1) / MAX_COLOUR
                 pal[i] = RGB{N0f8}(g, g, g)
             end

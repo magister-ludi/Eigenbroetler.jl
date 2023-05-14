@@ -1,6 +1,7 @@
 
 """
     hilbert_x(eb::Eigenbrot)
+
 Return the Hilbert x-transform of `eb`.
 """
 function hilbert_x(eb::Eigenbrot)
@@ -8,8 +9,8 @@ function hilbert_x(eb::Eigenbrot)
     h, w = size(nd)
     centre_c = 1 + w >> 1
     centre_r = 1 + h >> 1
-    for c in 1:w
-        for r in 1:h
+    for c = 1:w
+        for r = 1:h
             sign = if c == centre_c
                 r > centre_r ? im : -im
             elseif r == centre_r
@@ -25,6 +26,7 @@ end
 
 """
     hilbert_y(eb::Eigenbrot)
+
 Return the Hilbert x-transform of `eb`.
 """
 function hilbert_y(eb::Eigenbrot)
@@ -32,8 +34,8 @@ function hilbert_y(eb::Eigenbrot)
     h, w = size(nd)
     centre_c = 1 + w >> 1
     centre_r = 1 + h >> 1
-    for c in 1:w
-        for r in 1:h
+    for c = 1:w
+        for r = 1:h
             sign = if c == centre_c
                 r > centre_r ? im : -im
             elseif r == centre_r
@@ -49,6 +51,7 @@ end
 
 """
     fft_xshear(eb::Eigenbrot, xShear::Real, expand::Bool = true)
+
 Shear `eb` by a factor 'xShear' in the x-direction using the Fourier
 shift theorem, and return the result. If `expand` is true the input
 is padded so that the shear doesn't wrap the data as a result of
@@ -64,9 +67,9 @@ function fft_xshear(eb::Eigenbrot, xShear::Real, expand::Bool = true)
     h, w = size(xform)
     halfHeight = h / 2
     lim = iseven(w) ? w >> 1 : (w + 1) >> 1
-    for row in 1:h
+    for row = 1:h
         δ = xShear * (halfHeight - row + 1)
-        for i in 1:lim
+        for i = 1:lim
             θ = (2.0 * π * δ * i) / w
             cs = cos(θ) + im * sin(θ)
             xform[row, i + 1] *= cs
@@ -85,6 +88,7 @@ end
 
 """
     fft_yshear(eb::Eigenbrot, xShear::Real, expand::Bool = true)
+
 Shear `eb` by a factor 'yShear' in the y-direction using the Fourier
 shift theorem, and return the result. If `expand` is true the input
 is padded so that the shear doesn't wrap the data as a result of
@@ -100,9 +104,9 @@ function fft_yshear(eb::Eigenbrot, yShear::Real, expand::Bool = true)
     h, w = size(xform)
     halfWidth = w / 2
     lim = iseven(h) ? h >> 1 : (h + 1) >> 1
-    for col in 1:w
+    for col = 1:w
         δ = yShear * (halfWidth - col + 1)
-        for i in 1:lim
+        for i = 1:lim
             θ = (2.0 * π * δ * i) / h
             cs = cos(θ) + im * sin(θ)
             xform[i + 1, col] *= cs
@@ -121,6 +125,7 @@ end
 
 """
     rotate90(eb::Eigenbrot, n::Integer)
+
 Return the result of rotating `eb` through an angle of
 `n` * π /2 (i.e. `n` right angles).
 """
@@ -130,7 +135,7 @@ function rotate90(eb::Eigenbrot, n::Integer)
     elseif n == 1
         h, w = size(eb)
         e2 = Eigenbrot(w, h, eb.fft)
-        for r in 1:w
+        for r = 1:w
             e2.vals[r, 1:h] = eb.vals[h:-1:1, r]
         end
         return e2
@@ -142,7 +147,7 @@ function rotate90(eb::Eigenbrot, n::Integer)
     elseif n == 3
         h, w = size(eb)
         e2 = Eigenbrot(w, h, eb.fft)
-        for r in 1:w
+        for r = 1:w
             e2.vals[w - r + 1, h:-1:1] = eb.vals[h:-1:1, r]
         end
         return e2
@@ -153,6 +158,7 @@ end
 
 """
     fourierRotation(eb::Eigenbrot, θ::Real, expand::Bool = true)
+
 Return the result of rotating `eb` through an angle `θ`,
 using the algorithm described by Larkin, Oldfield and Klemm
 (Optics Communications 139 (1997) 99-106). If `expand` is true,
