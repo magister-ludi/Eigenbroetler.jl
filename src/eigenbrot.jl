@@ -1,23 +1,43 @@
 
 """
     Eigenbrot(filename)
+
 Construct an Eigenbrot from a file, which should be a FITS
 file (including a gzipped FITS file), or an image type that
-can be loaded by ImageMagick.
+can be loaded by ImageIO.
+"""
+Eigenbrot(filename)
 
-    Eigenbrot(data::Matrix{ComplexF64}, fft = false)
-Construct an Eigenbrot from a matrix of complex values.
+"""
+    Eigenbrot(data::AbstractMatrix{<:Number}, fft = false)
 
+Construct an Eigenbrot from a matrix of numbers.
+"""
+Eigenbrot(data::AbstractMatrix{ComplexF64}, fft = false)
+
+"""
     Eigenbrot(rows::Integer, cols::Integer, fft = false)
-Construct an unitialised Eigenbrot of size `rows×cols`.
 
+Construct an unitialised Eigenbrot of size `rows×cols`.
+"""
+Eigenbrot(rows::Integer, cols::Integer, fft = false)
+
+"""
     Eigenbrot(f::Function, rows::Integer, cols::Integer, fft = false)
+
 Construct an Eigenbrot of size `rows×cols`, using `f(x, y)` to
 calculate the data values.
-
-    Eigenbrot(img::Matrix{Gray{T}}, fft = false) where {T}
-Construct an Eigenbrot from a grey scale image.
 """
+Eigenbrot(f::Function, rows::Integer, cols::Integer, fft = false)
+
+"""
+    Eigenbrot(img::AbstractMatrix{C}, fft = false) where {C <: Colorant}
+
+Construct an Eigenbrot from an image. Pixels will be converted to
+greyscale, then to complex values.
+"""
+Eigenbrot(img::AbstractMatrix{C}, fft = false) where {C <: Colorant}
+
 mutable struct Eigenbrot
     vals::Matrix{ComplexF64}
     fft::Bool
@@ -25,12 +45,12 @@ mutable struct Eigenbrot
     maxCmp::Float64
     minCmp::Float64
     maxMag::Float64
-    Eigenbrot(data::Matrix{T}, fft = false) where {T <: Number} =
+    Eigenbrot(data::AbstractMatrix{T}, fft = false) where {T <: Number} =
         new(ComplexF64.(data), fft, false)
 end
 
 Eigenbrot(rows::Integer, cols::Integer, fft = false) =
-        Eigenbrot(Matrix{ComplexF64}(undef, rows, cols), fft)
+    Eigenbrot(Matrix{ComplexF64}(undef, rows, cols), fft)
 
 @enum Scale LinearScale LogScale RootScale
 @enum Component RealPart ImagPart Magn Phase
@@ -48,22 +68,21 @@ function Eigenbrot(f::Function, rows::Integer, cols::Integer, fft = false)
     xMin = xMax - cols + 1
     yMax = div(rows, 2) - 1
     yMin = yMax - rows + 1
-    return Eigenbrot([ComplexF64(f(x, y)) for y in yMin:yMax, x in xMin:xMax], fft)
+    return Eigenbrot([ComplexF64(f(x, y)) for y = yMin:yMax, x = xMin:xMax], fft)
 end
 
-function Eigenbrot(img::Matrix{Gray{T}}, fft = false) where {T}
+function Eigenbrot(img::AbstractMatrix{Gray{T}}, fft = false) where {T}
     h, w = size(img)
     cdata = Matrix{ComplexF64}(undef, h, w)
-    for c in 1:w
-        for r in 1:h
+    for c = 1:w
+        for r = 1:h
             cdata[h - r + 1, c] = ComplexF64(round(UInt8, 255 * img[r, c].val))
         end
     end
     return Eigenbrot(cdata, fft)
 end
 
-Eigenbrot(img::Matrix{C}, fft = false) where {C <: Colorant} =
-    Eigenbrot(Gray.(img), fft)
+Eigenbrot(img::AbstractMatrix{C}, fft = false) where {C <: Colorant} = Eigenbrot(Gray.(img), fft)
 
 function read_fits(file::AbstractString)
     fits = FITS(file)
@@ -74,7 +93,7 @@ function read_fits(file::AbstractString)
             break
         end
     end
-    if hdu == nothing
+    if isnothing(hdu)
         error("No image found in FITS file '$file'")
     end
     isfft, comment = read_key(hdu, "ISFFT")
@@ -83,8 +102,8 @@ function read_fits(file::AbstractString)
     if ndims(data) > 2
         w, h = size(data)
         cdata = Matrix{ComplexF64}(undef, h, w)
-        for c in 1:w
-            for r in 1:h
+        for c = 1:w
+            for r = 1:h
                 cdata[r, c] = ComplexF64(data[c, r, 1], data[c, r, 2])
             end
         end
@@ -128,8 +147,8 @@ function Eigenbrot(filename::AbstractString)
     end
 end
 
-Images.width(eb::Eigenbrot) = size(eb.vals, 2)
-Images.height(eb::Eigenbrot) = size(eb.vals, 1)
+ImageCore.width(eb::Eigenbrot) = size(eb.vals, 2)
+ImageCore.height(eb::Eigenbrot) = size(eb.vals, 1)
 isFFT(eb::Eigenbrot) = eb.fft
 
 for name in (:ndims, :length, :size)
@@ -139,7 +158,7 @@ for name in (:ndims, :length, :size)
 end
 
 Base.size(eb::Eigenbrot, args...) = size(eb.vals, args...)
-
+#=
 Base.getindex(eb::Eigenbrot, row::Integer, col::Integer) = getindex(eb.vals, row, col)
 Base.getindex(eb::Eigenbrot,
               rows::AbstractRange{T},
@@ -165,11 +184,25 @@ function Base.setindex!(eb::Eigenbrot, val::Number,
     reset!(eb)
     setindex!(eb.vals, val, rc[1], rc[2])
 end
+=#
+
+Base.axes(eb::Eigenbrot, d) = axes(eb.vals, d)
+
+Base.getindex(eb::Eigenbrot, idx...) = getindex(eb.vals, idx...)
+
+Base.getindex(eb::Eigenbrot, rc::Tuple{T, U}) where {T <: Integer, U <: Integer} =
+    getindex(eb.vals, rc[1], rc[2])
+
+Base.setindex!(eb::Eigenbrot, val::Number, idx...) = setindex!(eb.vals, val, idx...)
+
+Base.setindex!(eb::Eigenbrot, val::Number, rc::Tuple{T, U}) where {T <: Integer, U <: Integer} =
+    setindex!(eb.vals, val, rc[1], rc[2])
 
 reset!(eb::Eigenbrot) = (eb.have_min_max = false)
 
 """
     fill!(eb, x)
+
 Fill Eigenbrot `eb` with the number `x`.
 """
 function Base.fill!(eb::Eigenbrot, x::Number)
@@ -179,14 +212,17 @@ end
 
 """
     save(filename::AbstractString, eb::Eigenbrot)
+
 Write Eigenbrot `eb` to a file in FITS format
 
     save(filename::AbstractString, eb::Eigenbrot, cmp::ImageSetting; colours::Symbol)
+
 Save a bitmap representation of a component of Eigenbrot `eb` to
 `filename`. The file format will be determined by the file name.
 The component of the data and the scaling method are determined by `cmp`.
 
     save(filename, eb::Eigenbrot, cmp::ImageSetting, cmp2::ImageSetting; colours::Symbol)
+
 Save a bitmap representation of two components of Eigenbrot `eb` to
 `filename`. The file format will be determined by the file name.
 The components of the data and the scaling method are determined by `cmp`
@@ -195,8 +231,8 @@ and `cmp2`.
 function FileIO.save(filename::AbstractString, eb::Eigenbrot)
     keys = ["COMMENT", "ISFFT"]
     values = [nothing, eb.fft]
-    comments = ["CREATED BY AN EIGENBROETLER",
-                eb.fft ? "image in Fourier space?" : "image in real space?"]
+    comments =
+        ["CREATED BY AN EIGENBROETLER", eb.fft ? "image in Fourier space?" : "image in real space?"]
     hdr = FITSHeader(keys, values, comments)
     fits = FITS(filename, "w")
     w = width(eb)
@@ -205,8 +241,8 @@ function FileIO.save(filename::AbstractString, eb::Eigenbrot)
     lpData = Vector{Float64}(undef, hlen * 2)
     real = 1
     imag = 1 + hlen
-    for r in 1:h
-        for c in 1:w
+    for r = 1:h
+        for c = 1:w
             v = eb.vals[r, c]
             lpData[real] = v.re
             lpData[imag] = v.im
@@ -215,29 +251,33 @@ function FileIO.save(filename::AbstractString, eb::Eigenbrot)
         end
     end
     lpData = reshape(lpData, w, h, 2)
-    write(fits, lpData, header=hdr, name=nothing, ver=nothing)
+    write(fits, lpData, header = hdr, name = nothing, ver = nothing)
     close(fits)
 end
 
 """
     image(eb::Eigenbrot, cmp::ImageSetting; colours::Symbol)
+
 Construct a bitmap representation of a component of Eigenbrot `eb`.
 The component of the data and the scaling method are determined by `cmp`.
 
     image(eb::Eigenbrot, cmp::ImageSettingb, cmp2::ImageSetting; colours::Symbol)
+
 Construct a bitmap representation of two components of Eigenbrot `eb`.
 The components of the data and the scaling method are determined by `cmp`
 and `cmp2`.
 """
-function image(eb::Eigenbrot,
-               cmp::ImageSetting,
-               cmp2::Union{Nothing, ImageSetting} = nothing;
-               colours::Union{Symbol, AbstractString} = :grey)
+function image(
+    eb::Eigenbrot,
+    cmp::ImageSetting,
+    cmp2::Union{Nothing, ImageSetting} = nothing;
+    colours::Union{Symbol, AbstractString} = :grey,
+)
     w = w2 = width(eb)
     h = height(eb)
     hlen = w * h
     calculate_ranges!(eb)
-    (cmp2 != nothing) && (w2 *= 2)
+    !isnothing(cmp2) && (w2 *= 2)
     pal = palette(colours)
     img = Matrix{RGB{N0f8}}(undef, h, w2)
     calculate_pixels!(img, eb, cmp, pal, 0)
@@ -245,26 +285,33 @@ function image(eb::Eigenbrot,
     return img
 end
 
-FileIO.save(filename::AbstractString, eb::Eigenbrot,
-     cmp::ImageSetting,
-     cmp2::Union{Nothing, ImageSetting} = nothing;
-     colours::Union{Symbol, AbstractString} = :grey) =
-         save(filename, image(eb, cmp, cmp2, colours = colours))
+FileIO.save(
+    filename::AbstractString,
+    eb::Eigenbrot,
+    cmp::ImageSetting,
+    cmp2::Union{Nothing, ImageSetting} = nothing;
+    colours::Union{Symbol, AbstractString} = :grey,
+) = save(filename, image(eb, cmp, cmp2, colours = colours))
 
 scaleLogarithmic(x::Float64, ::Int) = log10(x)
 scaleLinear(x::Float64, ::Int) = x
-scaleRoot(x::Float64, p::Int) = x ^ (1.0 / p)
+scaleRoot(x::Float64, p::Int) = x^(1.0 / p)
 
-function calculate_pixels!(img::Matrix{RGB{N0f8}}, eb::Eigenbrot,
-                           cmp::ImageSetting, palette::Palette, idx::Integer)
+function calculate_pixels!(
+    img::AbstractMatrix{RGB{N0f8}},
+    eb::Eigenbrot,
+    cmp::ImageSetting,
+    palette::Palette,
+    idx::Integer,
+)
     h, w = size(eb.vals)
     if cmp.c == Phase
         # Phase part
         minValue = -π
         maxValue = +π
         scaleFactor = (NUM_COLOURS - 1) / (maxValue - minValue)
-        for c in 1:w
-            for r in h:-1:1
+        for c = 1:w
+            for r = h:-1:1
                 k = trunc(Int, scaleFactor * (angle(eb.vals[r, c]) - minValue))
                 idx += 1
                 img[idx] = palette[1 + k]
@@ -272,7 +319,8 @@ function calculate_pixels!(img::Matrix{RGB{N0f8}}, eb::Eigenbrot,
         end
     elseif cmp.c == Magn
         # Magnitude part
-        scaler = cmp.s == LinearScale ? scaleLinear : (cmp.s == LogScale ? scaleLogarithmic : scaleRoot)
+        scaler =
+            cmp.s == LinearScale ? scaleLinear : (cmp.s == LogScale ? scaleLogarithmic : scaleRoot)
         minValue = 0.0
         maxValue = eb.maxMag
         offset = (cmp.s == LogScale) ? 1.0 : 0.0
@@ -282,11 +330,12 @@ function calculate_pixels!(img::Matrix{RGB{N0f8}}, eb::Eigenbrot,
             maxValue -= offset
         else
             offset = minValue - offset
-            scaleFactor = (NUM_COLOURS - 1) /
+            scaleFactor =
+                (NUM_COLOURS - 1) /
                 (scaler(maxValue - offset, cmp.p) - scaler(minValue - offset, cmp.p))
         end
-        for c in 1:w
-            for r in h:-1:1
+        for c = 1:w
+            for r = h:-1:1
                 k = trunc(Int, scaler(abs(eb.vals[r, c]) - offset, cmp.p) * scaleFactor)
                 idx += 1
                 img[idx] = palette[1 + k]
@@ -301,12 +350,13 @@ function calculate_pixels!(img::Matrix{RGB{N0f8}}, eb::Eigenbrot,
             offset = 0.0
         else
             offset = minValue
-            scaleFactor = (NUM_COLOURS - 1) /
+            scaleFactor =
+                (NUM_COLOURS - 1) /
                 (scaler(maxValue - offset, cmp.p) - scaler(minValue - offset, cmp.p))
         end
         select = (cmp.c == RealPart) ? real : imag
-        for c in 1:w
-            for r in h:-1:1
+        for c = 1:w
+            for r = h:-1:1
                 k = trunc(Int, scaler(select(eb.vals[r, c]) - offset, cmp.p) * scaleFactor)
                 idx += 1
                 img[idx] = palette[1 + k]
@@ -315,13 +365,23 @@ function calculate_pixels!(img::Matrix{RGB{N0f8}}, eb::Eigenbrot,
     end
 end
 
-function Base.show(io::IO, eb::Eigenbrot)
-    print(io, "Eigenbrot(", height(eb), "x", width(eb), ", ",
-          isFFT(eb) ? "Fourier" : "Real", " space)")
- end
+function Base.show(io::IO, ::MIME"text/plain", eb::Eigenbrot)
+    print(
+        io,
+        "Eigenbrot(",
+        height(eb),
+        "x",
+        width(eb),
+        ", ",
+        isFFT(eb) ? "Fourier" : "Real",
+        " space)",
+    )
+    get(io, :compact, false) && print(io, ":\n", eb.vals)
+end
 
 """
     calculate_ranges!(eb::Eigenbrot)
+
 Calculate minimum and maximum values in an `Eigenbrot`.
 Used for calculating pixel values in an image.
 """
@@ -347,40 +407,52 @@ Base.copy(eb::Eigenbrot) = Eigenbrot(copy(eb.vals), eb.fft)
 
 """
     pixel(eb::Eigenbrot, x::Real, y::Real)
-Return a tuple , `(row, column)`, indexing the closest position
+
+Return a tuple, `(row, column)`, indexing the closest position
 in `eb` to to the Cartesian location `(x, y)`. The inverse of `coords`.
-    pixel(eb::Eigenbrot, xy::Tuple{Real, Real})
-Return a tuple , `(row, column)`, indexing the closest position
-in `eb` to to the Cartesian location given by `xy`. The inverse of `coords`.
 """
+pixel(eb::Eigenbrot, x::Real, y::Real)
+
+"""
+    pixel(eb::Eigenbrot, xy::Tuple{<:Real, <:Real})
+
+Return a tuple, `(row, column)`, indexing the closest position
+in `eb` to to the Cartesian location `(xy[1], xy[2])`. The inverse of `coords`.
+"""
+pixel(eb::Eigenbrot, xy::Tuple{<:Real, <:Real})
+
 function pixel(eb::Eigenbrot, x::Real, y::Real)
     h, w = size(eb.vals)
     xMax = div(w, 2)
     xMin = xMax - w
     yMax = div(h, 2)
     yMin = yMax - h
-    (round(Int, 1 + h * (y - yMin) / height(eb)),
-     round(Int, 1 + w * (x - xMin) / width(eb)))
+    (round(Int, 1 + h * (y - yMin) / height(eb)), round(Int, 1 + w * (x - xMin) / width(eb)))
 end
 
-pixel(eb::Eigenbrot, xy::Tuple{T, U}) where {T <: Real, U <: Real} =
-    pixel(eb, xy[1], xy[2])
+pixel(eb::Eigenbrot, xy::Tuple{T, U}) where {T <: Real, U <: Real} = pixel(eb, xy[1], xy[2])
 
 """
     coords(eb::Eigenbrot, r::Integer, c::Integer)
-Return a tuple, `(x, y)`, of the Cartesian location
+
+Return a tuple, `(x, y)`, of the location in the Argand plane
 mapped by the pixel `eb[r, c]`. The inverse of `pixel`.
-    coords(eb::Eigenbrot, rc::Tuple{Integer, Integer})
-Return a tuple , `(x, y)`, of the Cartesian location
-mapped by the pixel `eb[rc]`. The inverse of `pixel`.
 """
+coords(eb::Eigenbrot, r::Integer, c::Integer)
+
+"""
+    coords(eb::Eigenbrot, rc::Tuple{<:Integer, <:Integer})
+
+Return a tuple , `(x, y)`, location in the Argand plane
+mapped by the pixel `eb[rc[1], rc[2]]`. The inverse of `pixel`.
+"""
+coords(eb::Eigenbrot, rc::Tuple{<:Integer, <:Integer})
+
 function coords(eb::Eigenbrot, r::Integer, c::Integer)
     h, w = size(eb.vals)
     xMin = div(w, 2) - w
     yMin = div(h, 2) - h
-    (xMin + (c - 1) * width(eb) / w,
-     yMin + (r - 1) * height(eb) / h)
+    (xMin + (c - 1) * width(eb) / w, yMin + (r - 1) * height(eb) / h)
 end
 
-coords(eb::Eigenbrot, rc::Tuple{T, U}) where {T <: Integer, U <: Integer} =
-    coords(eb, rc[1], rc[2])
+coords(eb::Eigenbrot, rc::Tuple{T, U}) where {T <: Integer, U <: Integer} = coords(eb, rc[1], rc[2])
