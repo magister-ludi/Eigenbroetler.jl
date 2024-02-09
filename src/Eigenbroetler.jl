@@ -6,6 +6,7 @@ using FFTW
 using FITSIO
 using FITSIO.Libcfitsio
 using ImageCore
+using Statistics
 
 export Eigenbrot
 export Butterworth, Gaussian, Hamming, Hann, Square
@@ -24,7 +25,7 @@ export pixel, coords
 export scale_chirpz, scale_x_chirpz, scale_y_chirpz
 export hilbert_x, hilbert_y
 export fft_xshear, fft_yshear, rotate90, fourierRotation
-export highpass, lowpass
+export highpass, lowpass, conv, cor
 
 include("colourmaps.jl")
 include("eigenbrot.jl")
@@ -34,5 +35,6 @@ include("fft.jl")
 include("chirpz.jl")
 include("transform.jl")
 include("filters.jl")
+include("fourier_multiply.jl")
 
 end

@@ -147,8 +147,8 @@ function Eigenbrot(filename::AbstractString)
     end
 end
 
-ImageCore.width(eb::Eigenbrot) = size(eb.vals, 2)
-ImageCore.height(eb::Eigenbrot) = size(eb.vals, 1)
+width(eb::Eigenbrot) = size(eb.vals, 2)
+height(eb::Eigenbrot) = size(eb.vals, 1)
 isFFT(eb::Eigenbrot) = eb.fft
 
 for name in (:ndims, :length, :size)

@@ -83,7 +83,7 @@ function scale_1d(input::Eigenbrot, sc::ScaleData)
                 end
             end
             quad2.fft = !sc.isFFT
-            fftProd.vals .= sc.transform(sc.transform(quad2, true) * quad1, true)
+            fftProd.vals .= sc.transform(sc.transform(quad2, true) * quad1, true).vals
 
             for cc = firstXpixel:w
                 r2x = (div(w, 2) - cc + 1 + (deltaHor - 1) * w)^2 * sc.alpha[2]

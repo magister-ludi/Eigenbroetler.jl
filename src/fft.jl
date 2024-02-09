@@ -76,9 +76,9 @@ function FFTW.fft(eb::Eigenbrot, recentre::Bool = true)
 end
 
 """
-    fftx(eb[, recentre = true])
+    fftx!(eb[, recentre = true])
 
-Returns the one-dimensional DFT of Eigenbrot `eb` in
+Replace the data in `eb` by its one-dimensional DFT in
 the `x`-direction. If `recentre` is `true` the DFT is
 stored so that the value at the coordinate origin is
 at the central location of the data.
@@ -87,8 +87,8 @@ function fftx!(eb::Eigenbrot, recentre::Bool = true)
     if recentre
         w = width(eb)
         h = height(eb)
-        scale = 1.0 / sqrt(h)
-        alt = alt_y(h, w)
+        scale = 1.0 / sqrt(w)
+        alt = alt_x(h, w)
         eb.vals .*= alt
         eb.fft ? fft!(eb.vals, 2) : bfft!(eb.vals, 2)
         eb.vals .= scale * (alt .* eb.vals)
@@ -99,12 +99,20 @@ function fftx!(eb::Eigenbrot, recentre::Bool = true)
     return eb
 end
 
+"""
+    fftx(eb[, recentre = true])
+
+Return the one-dimensional DFT of Eigenbrot `eb` in
+the `x`-direction. If `recentre` is `true` the DFT is
+stored so that the value at the coordinate origin is
+at the central location of the data.
+"""
 fftx(eb::Eigenbrot, recentre::Bool = true) = fftx!(copy(eb), recentre)
 
 """
-    ffty(eb[, recentre = true])
+    ffty!(eb[, recentre = true])
 
-Returns the one-dimensional DFT of Eigenbrot `eb` in
+Replace the data in `eb` by its one-dimensional DFT in
 the `y`-direction. If `recentre` is `true` the DFT is
 stored so that the value at the coordinate origin is
 at the central location of the data.
@@ -125,6 +133,14 @@ function ffty!(eb::Eigenbrot, recentre::Bool = true)
     return eb
 end
 
+"""
+    ffty(eb[, recentre = true])
+
+Return the one-dimensional DFT of Eigenbrot `eb` in
+the `y`-direction. If `recentre` is `true` the DFT is
+stored so that the value at the coordinate origin is
+at the central location of the data.
+"""
 ffty(eb::Eigenbrot, recentre::Bool = true) = ffty!(copy(eb), recentre)
 
 """
